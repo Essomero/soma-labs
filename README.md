@@ -14,18 +14,32 @@ cd soma-labs
 
 ```
 soma-labs/
-├── docker-compose.yml        # Shared local Postgres 16 & Redis
-└── toggl/                    # Toggl Skills Test Fast Track (10 Lessons)
-    ├── 01-go-basics/         # L1: Worker pools, error wrapping, stdlib HTTP
-    ├── 02-time-dst/          # L2: Interval arithmetic, 23h/25h DST days
-    ├── 03-postgres-reporting/# L3: Window functions, gap-free buckets, index plans
-    ├── 04-api-keyset/        # L4: Fastify keyset pagination, bulk mutations, 409s
-    ├── 05-state-sync/        # L5: URL state synchronization, mirror bug elimination
-    ├── 06-query-cache/       # L6: TanStack Query invalidation graph, rollback
-    ├── 07-table-virtualization/# L7: 50,000-row table windowing & inline edit
-    ├── 08-perf-diagnostics/  # L8: N+1 detection, React render profiler
-    ├── 09-contract-tests/    # L9: Table-driven tests, contract assertions
-    └── 10-skill-drills/      # L10: Timed screen drills (race condition, autocomplete)
+├── docker-compose.yml           # Shared local Postgres 16 & Redis
+├── go/                          # Go From First Principles (7 Lessons)
+│   ├── 01-shallow-end/          # L1: Packages, variables, zero values, multiple returns
+│   ├── 02-pointers-structs/     # L2: Pointer vs value receivers, struct embedding
+│   ├── 03-slices-maps/          # L3: Slice headers, 3-index subslices, map comma-ok
+│   ├── 04-errors-defer/         # L4: %w wrapping, errors.Is/As, defer LIFO order
+│   ├── 05-interfaces/           # L5: Implicit satisfaction, typed-nil trap and fix
+│   ├── 06-goroutines-channels/  # L6: Channels, select timeouts, mutex under -race
+│   └── 07-context-http/         # L7: Cancellation tree, stdlib HTTP, JSON streaming
+└── toggl/                       # Toggl Senior Full-Stack Track
+    ├── 01-go-basics/            # Worker pools, error wrapping, stdlib HTTP
+    ├── 02-time-dst/             # Interval arithmetic, 23h/25h DST days
+    ├── 03-postgres-reporting/   # Window functions, gap-free buckets, index plans
+    ├── 04-api-keyset/           # Fastify keyset pagination, bulk mutations, 409s
+    ├── 05-state-sync/           # URL state synchronization, mirror bug elimination
+    ├── 06-query-cache/          # TanStack Query invalidation graph, rollback
+    ├── 07-table-virtualization/ # 50,000-row table windowing & inline edit
+    ├── 08-perf-diagnostics/     # N+1 detection, React render profiler
+    ├── 09-contract-tests/       # Table-driven tests, contract assertions
+    ├── 10-skill-drills/         # Timed screen drills (race condition, autocomplete)
+    ├── 11-capacity-planning/    # Availability calendar, plan vs actual outer join
+    ├── 12-eventual-consistency/ # Replica lag, monotonic read fence, rollback
+    ├── 13-capacity-heatmap/     # Heatmap matrix calculation, zero baseline
+    ├── 14-dense-grid-css/       # Subgrid row alignment, sticky scroll container
+    ├── 15-distroless-container/ # Multi-stage Dockerfile, static binary, signals
+    └── 16-ai-review-gate/       # AST linter for %w, context propagation, error check
 ```
 
 ---
@@ -40,13 +54,23 @@ soma-labs/
 
 ## Quick Start: Running Drills
 
-Run all Toggl drills from root:
+Run all drills from root:
+```bash
+npm test
+```
+
+Run Toggl track drills:
 ```bash
 npm run test:toggl
 ```
 
+Run Go foundations drills:
+```bash
+npm run test:go
+```
+
 Or navigate to any specific lesson directory:
 ```bash
-cd toggl/01-go-basics && go test -v -race ./...
-cd toggl/04-api-keyset && npm test
+cd toggl/11-capacity-planning && npm test
+cd go/05-interfaces && go test -v ./...
 ```

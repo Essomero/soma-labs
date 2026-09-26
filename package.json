@@ -4,6 +4,8 @@
   "private": true,
   "description": "Companion runnable code labs for Soma courses",
   "scripts": {
-    "test:toggl": "node run-all-toggl.mjs"
+    "test:toggl": "node run-all-toggl.mjs",
+    "test:go": "node run-all-go.mjs",
+    "test": "node run-all-toggl.mjs && node run-all-go.mjs"
   }
 }
