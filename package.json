@@ -6,6 +6,7 @@
   "scripts": {
     "test:toggl": "node run-all-toggl.mjs",
     "test:go": "node run-all-go.mjs",
-    "test": "node run-all-toggl.mjs && node run-all-go.mjs"
+    "test:fullstack": "node run-all-fullstack.mjs",
+    "test": "node run-all-toggl.mjs && node run-all-go.mjs && node run-all-fullstack.mjs"
   }
 }

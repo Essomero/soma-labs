@@ -1,0 +1,15 @@
+{
+  "name": "fullstack-01-why-this-type-error",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:lesson": "node --test tests/assignability.test.mjs tests/error_family.test.mjs",
+    "test:assignability": "node --test tests/assignability.test.mjs",
+    "test:family": "node --test tests/error_family.test.mjs",
+    "test:p1": "node --test tests/p1_excess_property.test.mjs",
+    "test:p2": "node --test tests/p2_optional_chain.test.mjs",
+    "test:p3": "node --test tests/p3_union_trap.test.mjs"
+  }
+}

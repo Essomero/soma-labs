@@ -23,6 +23,10 @@ soma-labs/
 │   ├── 05-interfaces/           # L5: Implicit satisfaction, typed-nil trap and fix
 │   ├── 06-goroutines-channels/  # L6: Channels, select timeouts, mutex under -race
 │   └── 07-context-http/         # L7: Cancellation tree, stdlib HTTP, JSON streaming
+├── fullstack/                    # Full-Stack Interview 40 Track (TypeScript, React, Node, browser, DB, testing, ops)
+│   ├── 01-why-this-type-error/   # L1: structural assignability, the error family, excess-property check
+│   ├── 02-generics/              # L2: constrained generics, inference sites, when NOT to generalize
+│   └── ...                       # one workspace per lesson, 01-40
 └── toggl/                       # Toggl Senior Full-Stack Track
     ├── 01-go-basics/            # Worker pools, error wrapping, stdlib HTTP
     ├── 02-time-dst/             # Interval arithmetic, 23h/25h DST days
