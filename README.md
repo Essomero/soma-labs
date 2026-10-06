@@ -2,6 +2,8 @@
 
 The official companion repository for hands-on drills, real-world code reproductions, and performance benchmarks across [Soma](https://soma.vercel.app) courses.
 
+Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. A passing test suite is not a lab — see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
+
 Clone this repository once:
 ```bash
 gh repo clone Essomero/soma-labs
@@ -27,23 +29,33 @@ soma-labs/
 │   ├── 01-why-this-type-error/   # L1: structural assignability, the error family, excess-property check
 │   ├── 02-generics/              # L2: constrained generics, inference sites, when NOT to generalize
 │   └── ...                       # one workspace per lesson, 01-40
-└── toggl/                       # Toggl Senior Full-Stack Track
-    ├── 01-go-basics/            # Worker pools, error wrapping, stdlib HTTP
-    ├── 02-time-dst/             # Interval arithmetic, 23h/25h DST days
-    ├── 03-postgres-reporting/   # Window functions, gap-free buckets, index plans
-    ├── 04-api-keyset/           # Fastify keyset pagination, bulk mutations, 409s
-    ├── 05-state-sync/           # URL state synchronization, mirror bug elimination
-    ├── 06-query-cache/          # TanStack Query invalidation graph, rollback
-    ├── 07-table-virtualization/ # 50,000-row table windowing & inline edit
-    ├── 08-perf-diagnostics/     # N+1 detection, React render profiler
-    ├── 09-contract-tests/       # Table-driven tests, contract assertions
-    ├── 10-skill-drills/         # Timed screen drills (race condition, autocomplete)
-    ├── 11-capacity-planning/    # Availability calendar, plan vs actual outer join
-    ├── 12-eventual-consistency/ # Replica lag, monotonic read fence, rollback
-    ├── 13-capacity-heatmap/     # Heatmap matrix calculation, zero baseline
-    ├── 14-dense-grid-css/       # Subgrid row alignment, sticky scroll container
-    ├── 15-distroless-container/ # Multi-stage Dockerfile, static binary, signals
-    └── 16-ai-review-gate/       # AST linter for %w, context propagation, error check
+├── toggl/                       # Toggl Senior Full-Stack Track
+│   ├── 01-go-basics/            # Worker pools, error wrapping, stdlib HTTP
+│   ├── 02-time-dst/             # Interval arithmetic, 23h/25h DST days
+│   ├── 03-postgres-reporting/   # Window functions, gap-free buckets, index plans
+│   ├── 04-api-keyset/           # Fastify keyset pagination, bulk mutations, 409s
+│   ├── 05-state-sync/           # URL state synchronization, mirror bug elimination
+│   ├── 06-query-cache/          # TanStack Query invalidation graph, rollback
+│   ├── 07-table-virtualization/ # 50,000-row table windowing & inline edit
+│   ├── 08-perf-diagnostics/     # N+1 detection, React render profiler
+│   ├── 09-contract-tests/       # Table-driven tests, contract assertions
+│   ├── 10-skill-drills/         # Timed screen drills (race condition, autocomplete)
+│   ├── 11-capacity-planning/    # Availability calendar, plan vs actual outer join
+│   ├── 12-eventual-consistency/ # Replica lag, monotonic read fence, rollback
+│   ├── 13-capacity-heatmap/     # Heatmap matrix calculation, zero baseline
+│   ├── 14-dense-grid-css/       # Subgrid row alignment, sticky scroll container
+│   ├── 15-distroless-container/ # Multi-stage Dockerfile, static binary, signals
+│   └── 16-ai-review-gate/       # AST linter for %w, context propagation, error check
+└── hogql/                       # HogQL Direct Connections & Warehouse Access Control (mocked PostHog internals)
+    ├── lib/                     # In-memory mocks mirroring real PostHog modules
+    ├── GUIDE.md                 # Lightweight walkthrough
+    ├── 01-flag-gate/            # Feature-flag master switch
+    ├── 02-fail-closed/          # No user denies; synthetic/shared-link bypasses
+    ├── 03-org-admin/            # Org admins bypass object ACLs
+    ├── 04-all-or-nothing/       # One denied table blocks raw for the connection
+    ├── 05-raw-vs-hogql/         # Same query, two enforcement paths
+    ├── 06-schema-drop/          # HogQL drops denied tables; preload avoids N lookups
+    └── 07-guards-and-invariant/ # Raw statement guards; flag must gate BOTH paths
 ```
 
 ---
@@ -73,8 +85,23 @@ Run Go foundations drills:
 npm run test:go
 ```
 
+Run HogQL direct-connection drills:
+```bash
+npm run test:hogql
+```
+
 Or navigate to any specific lesson directory:
 ```bash
 cd toggl/11-capacity-planning && npm test
 cd go/05-interfaces && go test -v ./...
+cd hogql/04-all-or-nothing && npm test
 ```
+
+---
+
+## HogQL Direct Connections Track
+
+A mocked, runnable reproduction of PostHog's HogQL direct-connection access control: how
+`sendRawQuery` is gated, how per-object warehouse ACLs are enforced, and the invariant that
+keeps raw mode and HogQL from drifting. No Django, no database — `hogql/lib/` mirrors the
+real modules with matching names. Start at [`hogql/GUIDE.md`](hogql/GUIDE.md).
