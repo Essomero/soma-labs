@@ -17,6 +17,12 @@ cd soma-labs
 ```
 soma-labs/
 ├── docker-compose.yml           # Shared local Postgres 16 & Redis
+├── typescript/                 # TypeScript Interview Fast Track (5 Lessons, symlinked)
+│   ├── 01-why-this-type-error/  # L1: structural assignability, error family, excess property
+│   ├── 02-generics/             # L2: constrained generics, inference sites, when NOT to generalize
+│   ├── 03-discriminated-unions/ # L3: tagged unions, exhaustiveness with never, narrowing
+│   ├── 04-utility-types/        # L4: mapped types, keyof, conditional types, infer
+│   └── 05-typing-the-boundary/  # L5: trust boundaries, unknown vs any, Zod schemas
 ├── go/                          # Go From First Principles (7 Lessons)
 │   ├── 01-shallow-end/          # L1: Packages, variables, zero values, multiple returns
 │   ├── 02-pointers-structs/     # L2: Pointer vs value receivers, struct embedding
@@ -73,6 +79,11 @@ soma-labs/
 Run all drills from root:
 ```bash
 npm test
+```
+
+Run TypeScript fast track drills:
+```bash
+npm run test:typescript
 ```
 
 Run Toggl track drills:
