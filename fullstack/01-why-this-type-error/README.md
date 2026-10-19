@@ -22,26 +22,28 @@ npm run tour              # full guided tour
 ```
 ## Quick Start
 
-### Option A — Docker Compose (recommended)
+### Option A: Deno (Recommended: Native TypeScript runner, zero dependencies)
 
-The compose file mounts this directory into the container, so edits in `src/` are picked up instantly.
+This workspace uses native TypeScript (.ts) files driven directly by Deno. There are no build steps, no tsconfig, and no node_modules required:
+
+```bash
+# If Deno is not yet installed:
+# brew install deno (macOS) or curl -fsSL https://deno.land/install.sh | sh
+
+npm run lab          # or: deno task lab
+npm run tour         # or: deno task tour
+npm run test:lesson  # regression guard for lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
+npm run test:p2
+npm run test:p3
+```
+
+### Option B: Docker Compose
 
 ```bash
 docker compose run --rm test            # all tests
 docker compose run --rm test npm run test:lesson
 docker compose run --rm test npm run test:p1
-```
-
-### Option B — Native Node (Node 20+, no dependencies)
-
-This workspace uses Node's built-in test runner. There is no `node_modules` to install:
-
-```bash
-npm run tour         # see the guided tour
-npm run test:lesson  # regression guard for the lesson concepts
-npm run test:p1      # problem 1 (fails until fixed)
-npm run test:p2
-npm run test:p3
 ```
 
 ## Tear Down & Cleanup
@@ -55,11 +57,11 @@ docker image prune -f
 
 **Demo (read, then run):**
 
-* `src/assignability.mjs` — `isAssignable` / `missingMembers`, the structural assignability rule.
-* `src/error_family.mjs` — `classifyError`, maps a checker message to the family that fired.
+* `src/assignability.ts`: `isAssignable` / `missingMembers`, the structural assignability rule.
+* `src/error_family.ts`: `classifyError`, maps a checker message to the family that fired.
 
 **Practice problems (fix `src/`, make the test pass):**
 
-1. `src/p1_excess_property.mjs` — the excess property check on a fresh literal.
-2. `src/p2_optional_chain.mjs` — the possibly-undefined chain.
-3. `src/p3_union_trap.mjs` — safe access on a union is the intersection of member properties.
+1. `src/p1_excess_property.ts`: the excess property check on a fresh literal.
+2. `src/p2_optional_chain.ts`: the possibly-undefined chain.
+3. `src/p3_union_trap.ts`: safe access on a union is the intersection of member properties.

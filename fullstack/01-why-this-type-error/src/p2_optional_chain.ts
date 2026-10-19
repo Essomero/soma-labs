@@ -3,7 +3,11 @@
  * A missing key means "no preference", which falls back to the light theme.
  */
 
-export function themeFor(settings, key) {
+export interface ThemeEntry {
+  theme: string;
+}
+
+export function themeFor(settings: Map<string, ThemeEntry>, key: string): string {
   const entry = settings.get(key);
-  return entry.theme.toUpperCase();
+  return entry!.theme.toUpperCase();
 }

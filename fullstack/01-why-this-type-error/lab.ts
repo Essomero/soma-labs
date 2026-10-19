@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run -A
 /**
  * TypeScript Type Error & Assignability Lab
  *
@@ -6,35 +6,35 @@
  * excess property check, and the diagnostic error families.
  *
  * Usage:
- *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
- *   node lab.mjs probe 1          Run ONLY Probe 1 (Exact Match)
- *   node lab.mjs probe 2          Run ONLY Probe 2 (Missing Member TS2322)
- *   node lab.mjs probe 3          Run ONLY Probe 3 (Variable Reference & Structural Subtyping)
- *   node lab.mjs probe 4          Run ONLY Probe 4 (Fresh Literal Excess Property Check TS2353)
- *   node lab.mjs probe 5          Run ONLY Probe 5 (Diagnostic Error Families)
- *   node lab.mjs assignability    Run assignability probes 1-4
- *   node lab.mjs family           Run error diagnostic probe 5
- *   node lab.mjs check <val> <shape> [fresh]
- *   node lab.mjs classify "<error-message>"
+ *   deno run -A lab.ts            Interactive REPL session (or tour in non-interactive shell)
+ *   deno run -A lab.ts --step     Interactive step-by-step walkthrough (pauses between probes)
+ *   deno run -A lab.ts probe 1    Run ONLY Probe 1 (Exact Match)
+ *   deno run -A lab.ts probe 2    Run ONLY Probe 2 (Missing Member TS2322)
+ *   deno run -A lab.ts probe 3    Run ONLY Probe 3 (Variable Reference & Structural Subtyping)
+ *   deno run -A lab.ts probe 4    Run ONLY Probe 4 (Fresh Literal Excess Property Check TS2353)
+ *   deno run -A lab.ts probe 5    Run ONLY Probe 5 (Diagnostic Error Families)
+ *   deno run -A lab.ts assignability Run assignability probes 1-4
+ *   deno run -A lab.ts family     Run error diagnostic probe 5
+ *   deno run -A lab.ts check <val> <shape> [fresh]
+ *   deno run -A lab.ts classify "<error-message>"
  */
 
 import readline from "node:readline";
-import { isAssignable, missingMembers } from "./src/assignability.mjs";
-import { classifyError } from "./src/error_family.mjs";
+import { isAssignable, missingMembers } from "./src/assignability.ts";
+import { classifyError } from "./src/error_family.ts";
 
-export function formatJson(val) {
+export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
-export function runProbe1() {
-  const out = [];
+export function runProbe1(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 1/4] Structural Assignability: Exact Shape Match");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.mjs):");
+  out.push("\nCode Under Test (src/assignability.ts):");
   out.push("  interface User { id: string; name: string; }");
-  out.push("  function isAssignable(value, shape): boolean");
+  out.push("  function isAssignable(value: unknown, shape: Record<string, string>): boolean");
 
   out.push("\nExecution at Call Site:");
   out.push("  const shape = { id: \"string\", name: \"string\" };");
@@ -49,12 +49,12 @@ export function runProbe1() {
   return out.join("\n");
 }
 
-export function runProbe2() {
-  const out = [];
+export function runProbe2(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 2/4] Structural Assignability: Missing Required Member");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.mjs):");
+  out.push("\nCode Under Test (src/assignability.ts):");
   out.push("  interface User { id: string; name: string; }");
   out.push("  const user: User = { id: \"u1\" }; // missing 'name'");
 
@@ -67,12 +67,12 @@ export function runProbe2() {
   return out.join("\n");
 }
 
-export function runProbe3() {
-  const out = [];
+export function runProbe3(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 3/4] Structural Subtyping: Variable Reference with Extra Members");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.mjs):");
+  out.push("\nCode Under Test (src/assignability.ts):");
   out.push("  interface User { id: string; name: string; }");
   out.push("  const payload = { id: \"u1\", name: \"Ada Lovelace\", admin: true }; // pre-existing variable");
   out.push("  const user: User = payload; // assigning variable to User");
@@ -86,12 +86,12 @@ export function runProbe3() {
   return out.join("\n");
 }
 
-export function runProbe4() {
-  const out = [];
+export function runProbe4(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 4/4] Excess Property Check: Fresh Literal with Extra Members");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.mjs):");
+  out.push("\nCode Under Test (src/assignability.ts):");
   out.push("  interface User { id: string; name: string; }");
   out.push("  const user: User = { id: \"u1\", name: \"Ada Lovelace\", admin: true }; // fresh literal");
 
@@ -105,10 +105,10 @@ export function runProbe4() {
   return out.join("\n");
 }
 
-export function runProbe5() {
-  const out = [];
+export function runProbe5(): string {
+  const out: string[] = [];
   out.push("================================================================================");
-  out.push("  Diagnostic Error Families (src/error_family.mjs)");
+  out.push("  Diagnostic Error Families (src/error_family.ts)");
   out.push("================================================================================");
 
   out.push("\n[Diagnostic 1] Base Assignability Mismatch");
@@ -129,7 +129,7 @@ export function runProbe5() {
   return out.join("\n");
 }
 
-export function probeAssignability(value, shape, options = {}) {
+export function probeAssignability(value: unknown, shape: Record<string, string>, options: { isFresh?: boolean } = {}): string {
   const isFresh = options.isFresh ?? false;
   const missing = missingMembers(value, shape);
   const extraKeys =
@@ -175,7 +175,7 @@ export function probeAssignability(value, shape, options = {}) {
   return lines.join("\n");
 }
 
-export function probeFamily(message) {
+export function probeFamily(message: string): string {
   const family = classifyError(message);
   const details = {
     "missing-or-incompatible": {
@@ -219,19 +219,19 @@ export function probeFamily(message) {
   return lines.join("\n");
 }
 
-export function runAssignabilityTour() {
+export function runAssignabilityTour(): string {
   return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4()].join("\n");
 }
 
-export function runFamilyTour() {
+export function runFamilyTour(): string {
   return runProbe5();
 }
 
-export function runFullTour() {
+export function runFullTour(): string {
   return [runAssignabilityTour(), "\n" + runFamilyTour()].join("\n");
 }
 
-function parseJsonOrRaw(input) {
+function parseJsonOrRaw(input: string): any {
   try {
     return JSON.parse(input);
   } catch {
@@ -239,13 +239,13 @@ function parseJsonOrRaw(input) {
   }
 }
 
-async function waitForEnter(rl, promptText) {
-  return new Promise((resolve) => {
-    rl.question(promptText, () => resolve());
-  });
+function waitForEnter(rl: readline.Interface, promptText: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  rl.question(promptText, () => resolve());
+  return promise;
 }
 
-export async function runSteppedSession() {
+export async function runSteppedSession(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -263,18 +263,18 @@ export async function runSteppedSession() {
   await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: Fresh Literal Excess Property Check] ");
 
   console.log("\n" + runProbe4());
-  console.log("\nAll 4 assignability probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  console.log("\nAll 4 assignability probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
-export async function startRepl() {
+export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "lab-checker> ",
   });
 
-  console.log("\nTypeScript Type Error & Assignability Interactive Lab");
+  console.log("\nTypeScript Type Error & Assignability Interactive Lab (running with Deno)");
   console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', or 'probe 5' to run individual probes.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

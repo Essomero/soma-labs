@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateFresh } from "../src/p1_excess_property.mjs";
+import { validateFresh } from "../src/p1_excess_property.ts";
 
 const SHAPE = { id: "string", balance: "number" };
 
 test("Problem 1: a fresh literal with a stray member is refused, naming the member", () => {
-  const result = validateFresh({ id: "a1", balance: 10, owner: "ada" }, SHAPE);
+  const result = validateFresh({ id: "a1", balance: 10, owner: "ada" } as any, SHAPE);
   assert.deepStrictEqual(
     result,
     { ok: false, reason: "excess:owner" },

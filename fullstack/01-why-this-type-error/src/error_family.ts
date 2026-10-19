@@ -6,14 +6,14 @@
  * wins.
  */
 
-const RULES = [
+const RULES: [string, RegExp][] = [
   ["excess-property", /may only specify known properties/i],
   ["possibly-undefined", /possibly 'undefined'|possibly 'null'/i],
   ["union-no-common-member", /does not exist on type/i],
   ["missing-or-incompatible", /not assignable to/i],
 ];
 
-export function classifyError(message) {
+export function classifyError(message: string): string {
   for (const [family, pattern] of RULES) {
     if (pattern.test(message)) return family;
   }

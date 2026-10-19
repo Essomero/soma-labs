@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { label } from "../src/p3_union_trap.mjs";
+import { label } from "../src/p3_union_trap.ts";
 
 test("Problem 3: a view event labels with its page", () => {
   const result = label({ type: "view", page: "/home" });

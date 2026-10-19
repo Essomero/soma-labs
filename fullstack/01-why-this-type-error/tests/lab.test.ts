@@ -11,7 +11,7 @@ import {
   runAssignabilityTour,
   runFamilyTour,
   runFullTour,
-} from "../lab.mjs";
+} from "../lab.ts";
 
 test("runProbe1 details exact shape match", () => {
   const result = runProbe1();

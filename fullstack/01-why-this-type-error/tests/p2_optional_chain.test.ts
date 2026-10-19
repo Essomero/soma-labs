@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { themeFor } from "../src/p2_optional_chain.mjs";
+import { themeFor } from "../src/p2_optional_chain.ts";
 
 test("Problem 2: a stored preference is returned upper-cased", () => {
   const settings = new Map([["default", { theme: "dark" }]]);
@@ -19,7 +19,7 @@ test("Problem 2: a missing key falls back to the light theme instead of throwing
     `Expected the missing-key fallback "LIGHT", but the call ${(() => {
       try {
         return JSON.stringify(themeFor(settings, "default"));
-      } catch (error) {
+      } catch (error: any) {
         return `threw ${error.constructor.name}`;
       }
     })()}.`,
