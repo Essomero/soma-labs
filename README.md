@@ -68,10 +68,11 @@ soma-labs/
 
 ## Prerequisites
 
-- **Node.js**: v20+ (Node v24 with native `node:test` runner included)
+- **Deno**: v2.x+ (required for TypeScript labs: native zero-config .ts execution, type checking, and REPLs)
+  - Install: `brew install deno` (macOS) or `curl -fsSL https://deno.land/install.sh | sh` (Linux / macOS)
+- **Node.js**: v20+ (for full-stack, React, and Node servers)
 - **Go**: v1.20+ (with standard `go test` and `-race`)
 - **Docker & Docker Compose**: (Optional, for running real Postgres reporting queries)
-
 ---
 
 ## Quick Start: Running Drills
