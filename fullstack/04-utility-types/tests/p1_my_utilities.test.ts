@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { myOmit, myPartial, myPick } from "../src/p1_my_utilities.mjs";
+import { myOmit, myPartial, myPick } from "../src/p1_my_utilities.ts";
 
 const USER = { id: "string", name: "string", passwordHash: "string" };
 

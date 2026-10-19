@@ -9,7 +9,7 @@ import {
   matchEach,
   myExclude,
   myNonNullable,
-} from "../src/conditional_types.mjs";
+} from "../src/conditional_types.ts";
 
 test("Exclude<T, U> filters per member, so only the covered ones vanish", () => {
   assert.deepStrictEqual(myExclude(["a", "b"], ["a", "c"]), ["b"]);
@@ -31,7 +31,7 @@ test("a conditional distributes over the union and re-unions the answers", () =>
 
 test("infer destructures the array pattern, or yields never when it did not match", () => {
   assert.strictEqual(inferElement(arrayOf("string")), "string");
-  assert.strictEqual(inferElement({ kind: "object" }), "never");
+  assert.strictEqual(inferElement({ kind: "other" }), "never");
 });
 
 test("infer destructures the signature pattern the same way", () => {

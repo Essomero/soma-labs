@@ -10,7 +10,7 @@ import {
   runProbe4,
   runProbe5,
   runMachineryTour,
-} from "../lab.mjs";
+} from "../lab.ts";
 
 test("runProbe1 details Partial<T> mapped loop", () => {
   const result = runProbe1();

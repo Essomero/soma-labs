@@ -6,11 +6,12 @@
  * members is a leaf of its own. Paths join with ".".
  */
 
-const isPlainObject = (value) =>
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-export function deepKeys(value, prefix = "") {
-  const paths = [];
+export function deepKeys(value: unknown, prefix = ""): string[] {
+  const paths: string[] = [];
+  if (!isPlainObject(value)) return paths;
   for (const [key, child] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (isPlainObject(child) && Object.keys(child).length > 0) {

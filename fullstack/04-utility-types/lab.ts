@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run -A
 /**
  * TypeScript Utility Types Lab — Interactive Mapped & Conditional Simulator
  *
@@ -8,16 +8,16 @@
  *   3. Pattern Matching with infer.
  *
  * Usage:
- *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
- *   node lab.mjs probe 1          Run ONLY Probe 1 (Partial<T> Mapped Loop)
- *   node lab.mjs probe 2          Run ONLY Probe 2 (Pick<T, K> & Keyed Constraint)
- *   node lab.mjs probe 3          Run ONLY Probe 3 (Omit<T, K> Inverted Pick)
- *   node lab.mjs probe 4          Run ONLY Probe 4 (Distributive Conditional Exclude)
- *   node lab.mjs probe 5          Run ONLY Probe 5 (Pattern Matching with infer)
- *   node lab.mjs machinery        Run all mapped & conditional probes (1-5)
- *   node lab.mjs distribute <u1,u2> <ex>
- *   node lab.mjs mapped <op> <shape> [keys]
+ *   deno run -A lab.ts            Interactive REPL session (or tour in non-interactive shell)
+ *   deno run -A lab.ts --step     Interactive step-by-step walkthrough (pauses between probes)
+ *   deno run -A lab.ts probe 1    Run ONLY Probe 1 (Partial<T> Mapped Loop)
+ *   deno run -A lab.ts probe 2    Run ONLY Probe 2 (Pick<T, K> & Keyed Constraint)
+ *   deno run -A lab.ts probe 3    Run ONLY Probe 3 (Omit<T, K> Inverted Pick)
+ *   deno run -A lab.ts probe 4    Run ONLY Probe 4 (Distributive Conditional Exclude)
+ *   deno run -A lab.ts probe 5    Run ONLY Probe 5 (Pattern Matching with infer)
+ *   deno run -A lab.ts machinery  Run all mapped & conditional probes (1-5)
+ *   deno run -A lab.ts distribute <u1,u2> <ex>
+ *   deno run -A lab.ts mapped <op> <shape> [keys]
  */
 
 import readline from "node:readline";
@@ -30,7 +30,8 @@ import {
   myOmit,
   myRecord,
   describeShape,
-} from "./src/shape_ops.mjs";
+  type ShapeDescriptor,
+} from "./src/shape_ops.ts";
 import {
   arrayOf,
   fnOf,
@@ -40,18 +41,18 @@ import {
   matchEach,
   inferElement,
   inferReturn,
-} from "./src/conditional_types.mjs";
+} from "./src/conditional_types.ts";
 
-export function formatJson(val) {
+export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
-export function runProbe1() {
-  const out = [];
+export function runProbe1(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 1/5] Mapped Types: How Partial<T> Rebuilds Shapes");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("\nCode Under Test (src/shape_ops.ts):");
   out.push("  type Partial<T> = { [K in keyof T]?: T[K] };");
   out.push("  function myPartial(shape): shape");
 
@@ -68,12 +69,12 @@ export function runProbe1() {
   return out.join("\n");
 }
 
-export function runProbe2() {
-  const out = [];
+export function runProbe2(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 2/5] Mapped Types: Pick<T, K> & The Keyed Constraint");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("\nCode Under Test (src/shape_ops.ts):");
   out.push("  type Pick<T, K extends keyof T> = { [P in K]: T[P] };");
   out.push("  function myPick(shape, keys): shape");
 
@@ -90,12 +91,12 @@ export function runProbe2() {
   return out.join("\n");
 }
 
-export function runProbe3() {
-  const out = [];
+export function runProbe3(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 3/5] Derived Utilities: Omit<T, K> as Pick Inverted");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("\nCode Under Test (src/shape_ops.ts):");
   out.push("  type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;");
   out.push("  function myOmit(shape, keys): shape");
 
@@ -110,12 +111,12 @@ export function runProbe3() {
   return out.join("\n");
 }
 
-export function runProbe4() {
-  const out = [];
+export function runProbe4(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 4/5] Conditional Types: Distribution Over Unions");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/conditional_types.mjs):");
+  out.push("\nCode Under Test (src/conditional_types.ts):");
   out.push("  type Exclude<T, U> = T extends U ? never : T;");
 
   out.push("\nExecution at Call Site:");
@@ -133,12 +134,12 @@ export function runProbe4() {
   return out.join("\n");
 }
 
-export function runProbe5() {
-  const out = [];
+export function runProbe5(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 5/5] Pattern Matching: Destructuring Types with infer");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/conditional_types.mjs):");
+  out.push("\nCode Under Test (src/conditional_types.ts):");
   out.push("  type ElementOf<T> = T extends (infer E)[] ? E : never;");
   out.push("  type ReturnOf<F>  = F extends (...args: any[]) => infer R ? R : never;");
 
@@ -157,11 +158,11 @@ export function runProbe5() {
   return out.join("\n");
 }
 
-export function runMachineryTour() {
+export function runMachineryTour(): string {
   return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4(), "\n" + runProbe5()].join("\n");
 }
 
-export function probeMapped(shape, op, keys = []) {
+export function probeMapped(shape: ShapeDescriptor, op: string, keys: string[] = []): string {
   const allKeys = keysOf(shape);
   const lines = [
     `Input Type Shape: ${describeShape(shape)}`,
@@ -183,7 +184,7 @@ export function probeMapped(shape, op, keys = []) {
         `  Constraint Check: [${keys.map((k) => `"${k}"`).join(", ")}] extends keyof T -> VALID`,
         `  Transformed Shape: ${describeShape(result)}`,
       );
-    } catch (err) {
+    } catch (err: any) {
       lines.push(
         `  Constraint Check: FAILED (${err.message})`,
         `  Refusal: Cannot pick keys that do not exist on the target shape.`,
@@ -202,7 +203,7 @@ export function probeMapped(shape, op, keys = []) {
   return lines.join("\n");
 }
 
-export function probeDistribution(union, excluded) {
+export function probeDistribution(union: string[], excluded: string[]): string {
   const lines = [
     `Input Union:    ${union.join(" | ")}`,
     `Exclusion Set:  ${excluded.join(" | ")}`,
@@ -210,7 +211,7 @@ export function probeDistribution(union, excluded) {
     `Step 1 — Distribution (evaluating each union member in isolation):`,
   ];
 
-  const terms = [];
+  const terms: string[] = [];
   for (const member of union) {
     const isExcluded = excluded.includes(member);
     const result = isExcluded ? "never" : `"${member}"`;
@@ -231,7 +232,7 @@ export function probeDistribution(union, excluded) {
   return lines.join("\n");
 }
 
-export function probeInfer(typeString) {
+export function probeInfer(typeString: string): string {
   const lines = [`Input Type Description: "${typeString}"`];
   if (typeString.endsWith("[]")) {
     const elemType = typeString.slice(0, -2);
@@ -255,7 +256,7 @@ export function probeInfer(typeString) {
   return lines.join("\n");
 }
 
-function parseJsonOrRaw(input) {
+function parseJsonOrRaw(input: string): any {
   try {
     return JSON.parse(input);
   } catch {
@@ -263,13 +264,13 @@ function parseJsonOrRaw(input) {
   }
 }
 
-async function waitForEnter(rl, promptText) {
-  return new Promise((resolve) => {
-    rl.question(promptText, () => resolve());
-  });
+function waitForEnter(rl: readline.Interface, promptText: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  rl.question(promptText, () => resolve());
+  return promise;
 }
 
-export async function runSteppedSession() {
+export async function runSteppedSession(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -290,18 +291,18 @@ export async function runSteppedSession() {
   await waitForEnter(rl, "\n[Press Enter to proceed to Probe 5/5: Pattern Matching with infer] ");
 
   console.log("\n" + runProbe5());
-  console.log("\nAll 5 utility type probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  console.log("\nAll 5 utility type probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
-export async function startRepl() {
+export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "lab-utilities> ",
   });
 
-  console.log("\nTypeScript Utility Types Interactive Lab");
+  console.log("\nTypeScript Utility Types Interactive Lab (running with Deno)");
   console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', or 'probe 5'.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

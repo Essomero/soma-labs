@@ -9,7 +9,7 @@ import {
   myPartial,
   myPick,
   myRecord,
-} from "../src/shape_ops.mjs";
+} from "../src/shape_ops.ts";
 
 const USER = { id: "string", name: "string", passwordHash: "string" };
 
@@ -42,7 +42,7 @@ test("Pick<T, K> keeps only the listed members, and refuses an unknown one", () 
   assert.throws(() => myPick(USER, ["nickname"]), /unknown member: nickname/);
 });
 
-test("Omit<T, K> is Pick inverted — composing them returns the original", () => {
+test("Omit<T, K> is Pick inverted: composing them returns the original", () => {
   const masked = myOmit(USER, ["passwordHash"]);
   assert.deepStrictEqual(masked, { id: "string", name: "string" });
   assert.deepStrictEqual(myPick(masked, ["id"]), { id: "string" });

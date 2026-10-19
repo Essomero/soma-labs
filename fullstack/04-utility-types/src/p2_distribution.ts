@@ -4,12 +4,12 @@
  */
 
 /** `Exclude<T, U>` */
-export function myExclude(members, excluded) {
+export function myExclude<T extends string>(members: T[], excluded: string[]): T[] {
   const covered = members.every((member) => excluded.includes(member));
   return covered ? [] : members;
 }
 
 /** `NonNullable<T>` */
-export function myNonNullable(members) {
+export function myNonNullable<T>(members: T[]): T[] {
   return members.filter((member) => member !== null && member !== undefined);
 }

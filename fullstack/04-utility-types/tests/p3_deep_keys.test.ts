@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deepKeys } from "../src/p3_deep_keys.mjs";
+import { deepKeys } from "../src/p3_deep_keys.ts";
 
 test("Problem 3: nested leaves keep the full path", () => {
   const form = { id: "u1", user: { name: "ada", address: { city: "Kampala" } } };

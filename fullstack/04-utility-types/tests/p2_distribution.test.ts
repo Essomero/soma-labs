@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { myExclude, myNonNullable } from "../src/p2_distribution.mjs";
+import { myExclude, myNonNullable } from "../src/p2_distribution.ts";
 
 test("Problem 2: Exclude filters one member at a time", () => {
   const kept = myExclude(["a", "b"], ["a", "c"]);

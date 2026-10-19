@@ -23,25 +23,28 @@ npm run tour           # full guided tour
 
 ## Quick Start
 
-### Option A — Docker Compose (recommended)
+### Option A: Deno (Recommended: Native TypeScript runner, zero dependencies)
 
-The compose file mounts this directory into the container, so edits in `src/` are picked up instantly.
+This workspace uses native TypeScript (.ts) files driven directly by Deno. There are no build steps, no tsconfig, and no node_modules required:
+
+```bash
+# If Deno is not yet installed:
+# brew install deno (macOS) or curl -fsSL https://deno.land/install.sh | sh
+
+npm run lab          # or: deno task lab
+npm run tour         # or: deno task tour
+npm run test:lesson  # regression guard for lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
+npm run test:p2
+npm run test:p3
+```
+
+### Option B: Docker Compose
 
 ```bash
 docker compose run --rm test            # all tests
 docker compose run --rm test npm run test:lesson
 docker compose run --rm test npm run test:p1
-```
-
-### Option B — Native Node (Node 20+, no dependencies)
-
-This workspace uses Node's built-in test runner. There is no `node_modules` to install:
-```bash
-npm run tour         # see the guided tour
-npm run test:lesson  # regression guard for the lesson concepts
-npm run test:p1      # problem 1 (fails until fixed)
-npm run test:p2
-npm run test:p3
 ```
 
 ## Tear Down & Cleanup
@@ -55,13 +58,13 @@ docker image prune -f
 
 **Demo (read, then run):**
 
-* `src/shape_ops.mjs` — `keysOf`, `memberOf`, `mapShape`, and the hand-built `myPartial` / `myPick` /
-  `myOmit` / `myRecord`.
-* `src/conditional_types.mjs` — `myExclude` / `myNonNullable` distribution, `matchEach`, and `infer`
+* `src/shape_ops.ts`: `keysOf`, `memberOf`, `mapShape`, and the hand-built `myPartial`, `myPick`,
+  `myOmit`, `myRecord`.
+* `src/conditional_types.ts`: `myExclude`, `myNonNullable` distribution, `matchEach`, and `infer`
   modelled as a destructure of the matched pattern.
 
 **Practice problems (fix `src/`, make the test pass):**
 
-1. `src/p1_my_utilities.mjs` — write `MyPartial`, `MyPick`, and `MyOmit` by hand.
-2. `src/p2_distribution.mjs` — the distribution trap in `MyExclude`.
-3. `src/p3_deep_keys.mjs` — the senior judgment call: nested key paths for form state.
+1. `src/p1_my_utilities.ts`: write `MyPartial`, `MyPick`, and `MyOmit` by hand.
+2. `src/p2_distribution.ts`: the distribution trap in `MyExclude`.
+3. `src/p3_deep_keys.ts`: the senior judgment call: nested key paths for form state.
