@@ -148,7 +148,7 @@ export function probeConstraintAt(obj, key) {
   const isAllowed = allowedKeys.includes(key);
 
   const lines = [
-    `Tested Function: at(obj, key) — representing <T, K extends keyof T>(obj: T, key: K): T[K]`,
+    `Tested Function: at(obj, key): representing <T, K extends keyof T>(obj: T, key: K): T[K]`,
     `Target object:   ${formatValue(obj)}`,
     `Allowed keys (keyof T): [${allowedKeys.map((k) => `"${k}"`).join(", ")}]`,
     `Requested key K: "${key}"`,
@@ -172,7 +172,7 @@ export function probeConstraintAt(obj, key) {
 
 export function probeConstraintRequire(obj, requiredMembers) {
   const lines = [
-    `Tested Function: requireMembers(value, members) — representing <T extends { ${requiredMembers.join(", ")} }>(val: T): T`,
+    `Tested Function: requireMembers(value, members): representing <T extends { ${requiredMembers.join(", ")} }>(val: T): T`,
     `Input value:     ${formatValue(obj)}`,
     `Constraint:      T extends { ${requiredMembers.join(", ")} }`,
   ];
