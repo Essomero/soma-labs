@@ -6,6 +6,12 @@
   "scripts": {
     "lab": "node lab.mjs",
     "tour": "node lab.mjs --tour",
+    "lab:step": "node lab.mjs --step",
+    "lab:probe-1": "node lab.mjs probe 1",
+    "lab:probe-2": "node lab.mjs probe 2",
+    "lab:probe-3": "node lab.mjs probe 3",
+    "lab:probe-4": "node lab.mjs probe 4",
+    "lab:probe-5": "node lab.mjs probe 5",
     "lab:assignability": "node lab.mjs --topic=assignability",
     "lab:family": "node lab.mjs --topic=family",
     "test": "node --test tests/*.test.mjs",

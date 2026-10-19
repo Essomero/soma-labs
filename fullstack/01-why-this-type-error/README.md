@@ -9,10 +9,16 @@ In this lab, you probe:
 
 **How to drive it:**
 ```bash
-npm run lab               # interactive REPL (probe values, test shapes, classify errors)
-npm run tour              # guided tour across assignability and error families
-npm run lab:assignability # probe structural assignability and excess property check
-npm run lab:family        # probe the error family diagnostic matrix
+npm run lab               # interactive REPL (test custom values and shapes)
+npm run lab:step          # interactive stepped session (pauses between probes)
+npm run lab:probe-1       # Probe 1: Exact shape match
+npm run lab:probe-2       # Probe 2: Missing required member (TS2322)
+npm run lab:probe-3       # Probe 3: Variable reference & structural subtyping
+npm run lab:probe-4       # Probe 4: Fresh literal excess property check (TS2353)
+npm run lab:probe-5       # Probe 5: Diagnostic error families matrix
+npm run lab:assignability # run all assignability probes (1-4)
+npm run lab:family        # run error family diagnostic probe (5)
+npm run tour              # full guided tour
 ```
 ## Quick Start
 

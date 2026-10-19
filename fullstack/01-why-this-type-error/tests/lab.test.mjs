@@ -3,58 +3,59 @@ import assert from "node:assert/strict";
 import {
   probeAssignability,
   probeFamily,
+  runProbe1,
+  runProbe2,
+  runProbe3,
+  runProbe4,
+  runProbe5,
   runAssignabilityTour,
   runFamilyTour,
   runFullTour,
 } from "../lab.mjs";
 
-test("probeAssignability handles exact match", () => {
-  const result = probeAssignability({ id: "1", name: "Ada" }, { id: "string", name: "string" });
-  assert.match(result, /ASSIGNABLE \(exact shape match\)/);
+test("runProbe1 details exact shape match", () => {
+  const result = runProbe1();
+  assert.match(result, /function isAssignable/);
+  assert.match(result, /ASSIGNABLE \(Exact match satisfies shape contract\)/);
 });
 
-test("probeAssignability handles missing member", () => {
-  const result = probeAssignability({ id: "1" }, { id: "string", name: "string" });
-  assert.match(result, /Required Member Check: FAILED/);
+test("runProbe2 details missing member refusal", () => {
+  const result = runProbe2();
+  assert.match(result, /TS2322/);
   assert.match(result, /REFUSED/);
 });
 
-test("probeAssignability allows extra members on variable references", () => {
-  const result = probeAssignability(
-    { id: "1", name: "Ada", role: "admin" },
-    { id: "string", name: "string" },
-    { isFresh: false },
-  );
-  assert.match(result, /Excess Property Check: SKIPPED/);
-  assert.match(result, /ASSIGNABLE \(structural subtyping/);
+test("runProbe3 details variable reference structural subtyping", () => {
+  const result = runProbe3();
+  assert.match(result, /Variables are checked for what is MISSING/);
+  assert.match(result, /ASSIGNABLE \(Structural subtyping/);
 });
 
-test("probeAssignability refuses extra members on fresh literals", () => {
-  const result = probeAssignability(
-    { id: "1", name: "Ada", role: "admin" },
-    { id: "string", name: "string" },
-    { isFresh: true },
-  );
-  assert.match(result, /Excess Property Check: TRIGGERED/);
+test("runProbe4 details fresh literal excess property check", () => {
+  const result = runProbe4();
+  assert.match(result, /Fresh literals trigger the Excess Property Check/);
   assert.match(result, /TS2353/);
+  assert.match(result, /REFUSED/);
 });
 
-test("probeFamily classifies error messages", () => {
-  const r1 = probeFamily("Type 'number' is not assignable to type 'string'.");
-  assert.match(r1, /missing-or-incompatible/);
-
-  const r2 = probeFamily("Object is possibly 'undefined'.");
-  assert.match(r2, /possibly-undefined/);
-
-  const r3 = probeFamily("Property 'radius' does not exist on type 'Shape'.");
-  assert.match(r3, /union-no-common-member/);
+test("runProbe5 details diagnostic error families", () => {
+  const result = runProbe5();
+  assert.match(result, /missing-or-incompatible/);
+  assert.match(result, /excess-property/);
+  assert.match(result, /possibly-undefined/);
+  assert.match(result, /union-no-common-member/);
 });
 
-test("guided tour runs cleanly", () => {
+test("probeAssignability handles programmatic calls", () => {
+  const r1 = probeAssignability({ id: "1", name: "Ada" }, { id: "string", name: "string" });
+  assert.match(r1, /ASSIGNABLE/);
+});
+
+test("guided tours run cleanly", () => {
   const ass = runAssignabilityTour();
-  assert.ok(ass.length > 100);
+  assert.ok(ass.length > 200);
   const fam = runFamilyTour();
   assert.ok(fam.length > 100);
   const full = runFullTour();
-  assert.ok(full.length > 200);
+  assert.ok(full.length > 300);
 });
