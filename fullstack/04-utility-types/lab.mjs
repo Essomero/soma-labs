@@ -9,8 +9,13 @@
  *
  * Usage:
  *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --tour           Run full guided tour
- *   node lab.mjs machinery        Run mapped & conditional type machinery probe
+ *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
+ *   node lab.mjs probe 1          Run ONLY Probe 1 (Partial<T> Mapped Loop)
+ *   node lab.mjs probe 2          Run ONLY Probe 2 (Pick<T, K> & Keyed Constraint)
+ *   node lab.mjs probe 3          Run ONLY Probe 3 (Omit<T, K> Inverted Pick)
+ *   node lab.mjs probe 4          Run ONLY Probe 4 (Distributive Conditional Exclude)
+ *   node lab.mjs probe 5          Run ONLY Probe 5 (Pattern Matching with infer)
+ *   node lab.mjs machinery        Run all mapped & conditional probes (1-5)
  *   node lab.mjs distribute <u1,u2> <ex>
  *   node lab.mjs mapped <op> <shape> [keys]
  */
@@ -39,6 +44,121 @@ import {
 
 export function formatJson(val) {
   return JSON.stringify(val);
+}
+
+export function runProbe1() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 1/5] Mapped Types: How Partial<T> Rebuilds Shapes");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("  type Partial<T> = { [K in keyof T]?: T[K] };");
+  out.push("  function myPartial(shape): shape");
+
+  out.push("\nExecution at Call Site:");
+  out.push("  const User = { id: \"string\", email: \"string\", role: \"string\", age: \"number\" };");
+  out.push("  const result = myPartial(User);");
+
+  out.push("\nBehind the Scenes in the TypeScript Compiler:");
+  out.push("  1. QUERY KEYS:       keyof User -> [\"id\", \"email\", \"role\", \"age\"]");
+  out.push("  2. MAPPED LOOP:      Iterates each member K in keyof T.");
+  out.push("  3. PROPERTY ACCESS:  T[K] indexes the original property type.");
+  out.push("  4. MODIFIER:         Appends '?' making each property optional.");
+  out.push("  5. TRANSFORMED TYPE: { id?: string; email?: string; role?: string; age?: number }");
+  return out.join("\n");
+}
+
+export function runProbe2() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 2/5] Mapped Types: Pick<T, K> & The Keyed Constraint");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("  type Pick<T, K extends keyof T> = { [P in K]: T[P] };");
+  out.push("  function myPick(shape, keys): shape");
+
+  out.push("\nCase A — Valid Pick:");
+  out.push("  const result = myPick(User, [\"id\", \"email\"]);");
+  out.push("  • Constraint Check: [\"id\", \"email\"] extends keyof User -> VALID");
+  out.push("  • Filtered Shape:   { id: string; email: string }");
+
+  out.push("\nCase B — Key Outside Constraint:");
+  out.push("  const invalid = myPick(User, [\"id\", \"salary\"]);");
+  out.push("  • Constraint Check: 'salary' does not exist in keyof User!");
+  out.push("  • Compiler Refusal: TS2344: Type '\"salary\"' does not satisfy the constraint 'keyof User'.");
+  out.push("  • Runtime Guard:    Throws Error: unknown member: salary");
+  return out.join("\n");
+}
+
+export function runProbe3() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 3/5] Derived Utilities: Omit<T, K> as Pick Inverted");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/shape_ops.mjs):");
+  out.push("  type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;");
+  out.push("  function myOmit(shape, keys): shape");
+
+  out.push("\nExecution at Call Site:");
+  out.push("  const result = myOmit(User, [\"age\"]);");
+
+  out.push("\nBehind the Scenes in the TypeScript Compiler:");
+  out.push("  1. FULL KEY SET:     keyof User -> [\"id\", \"email\", \"role\", \"age\"]");
+  out.push("  2. EXCLUSION FILTER: Exclude<keyof User, \"age\"> -> [\"id\", \"email\", \"role\"]");
+  out.push("  3. PICK COMPOSITION: Picks only the non-excluded keys.");
+  out.push("  4. TRANSFORMED TYPE: { id: string; email: string; role: string }");
+  return out.join("\n");
+}
+
+export function runProbe4() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 4/5] Conditional Types: Distribution Over Unions");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/conditional_types.mjs):");
+  out.push("  type Exclude<T, U> = T extends U ? never : T;");
+
+  out.push("\nExecution at Call Site:");
+  out.push("  type Action = \"click\" | \"hover\" | \"scroll\";");
+  out.push("  type NoHover = Exclude<Action, \"hover\">;");
+
+  out.push("\nBehind the Scenes in the TypeScript Compiler:");
+  out.push("  1. DISTRIBUTION: Naked type parameter 'T' distributes across each union member in isolation:");
+  out.push("     • \"click\" extends \"hover\" ? never : \"click\"   ==>  \"click\"");
+  out.push("     • \"hover\" extends \"hover\" ? never : \"hover\"   ==>  never");
+  out.push("     • \"scroll\" extends \"hover\" ? never : \"scroll\" ==>  \"scroll\"");
+  out.push("  2. RE-UNIONING:  \"click\" | never | \"scroll\"");
+  out.push("  3. COLLAPSING:   'never' represents the empty set and vanishes from unions.");
+  out.push("  4. FINAL TYPE:   \"click\" | \"scroll\"");
+  return out.join("\n");
+}
+
+export function runProbe5() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 5/5] Pattern Matching: Destructuring Types with infer");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/conditional_types.mjs):");
+  out.push("  type ElementOf<T> = T extends (infer E)[] ? E : never;");
+  out.push("  type ReturnOf<F>  = F extends (...args: any[]) => infer R ? R : never;");
+
+  out.push("\nPattern 1 — Array Element Unboxing:");
+  out.push("  const desc = arrayOf(\"string\"); // representing string[]");
+  out.push("  • Pattern match: string[] matches (infer E)[] -> binds E := string");
+  out.push("  • Extracted Type: string");
+
+  out.push("\nPattern 2 — Function Return Unboxing:");
+  out.push("  const desc = fnOf(\"Promise<User>\"); // representing () => Promise<User>");
+  out.push("  • Pattern match: () => Promise<User> matches (...args) => infer R -> binds R := Promise<User>");
+  out.push("  • Extracted Type: Promise<User>");
+
+  out.push("\nVerdict:");
+  out.push("  'infer' is pattern-matching destructuring for the type system.");
+  return out.join("\n");
+}
+
+export function runMachineryTour() {
+  return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4(), "\n" + runProbe5()].join("\n");
 }
 
 export function probeMapped(shape, op, keys = []) {
@@ -135,42 +255,43 @@ export function probeInfer(typeString) {
   return lines.join("\n");
 }
 
-export function runMachineryTour() {
-  const out = [];
-  out.push("================================================================================");
-  out.push("  TypeScript Utility Types Lab: Mapped & Conditional Machinery");
-  out.push("================================================================================");
-
-  const userType = { id: "string", email: "string", role: "string", age: "number" };
-
-  out.push("\n[Transform 1] Partial<User>");
-  out.push(probeMapped(userType, "partial"));
-
-  out.push("\n[Transform 2] Pick<User, 'id' | 'email'>");
-  out.push(probeMapped(userType, "pick", ["id", "email"]));
-
-  out.push("\n[Transform 3] Pick<User, 'id' | 'salary'> (Constraint Violation)");
-  out.push(probeMapped(userType, "pick", ["id", "salary"]));
-
-  out.push("\n[Transform 4] Omit<User, 'age'>");
-  out.push(probeMapped(userType, "omit", ["age"]));
-
-  out.push("\n[Transform 5] Distributive Conditional Type: Exclude<'click' | 'hover' | 'scroll', 'hover'>");
-  out.push(probeDistribution(["click", "hover", "scroll"], ["hover"]));
-
-  out.push("\n[Transform 6] Type Destructuring with infer");
-  out.push(probeInfer("() => Promise<User>"));
-  out.push(probeInfer("string[]"));
-
-  return out.join("\n");
-}
-
 function parseJsonOrRaw(input) {
   try {
     return JSON.parse(input);
   } catch {
     return input;
   }
+}
+
+async function waitForEnter(rl, promptText) {
+  return new Promise((resolve) => {
+    rl.question(promptText, () => resolve());
+  });
+}
+
+export async function runSteppedSession() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log("\nStarting Stepped Walkthrough: Utility Types & Mapped Machinery (5 Probes)\n");
+
+  console.log(runProbe1());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/5: Pick<T, K> & Keyed Constraint] ");
+
+  console.log("\n" + runProbe2());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/5: Omit<T, K> as Inverted Pick] ");
+
+  console.log("\n" + runProbe3());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/5: Distributive Conditional Exclude] ");
+
+  console.log("\n" + runProbe4());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 5/5: Pattern Matching with infer] ");
+
+  console.log("\n" + runProbe5());
+  console.log("\nAll 5 utility type probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  rl.close();
 }
 
 export async function startRepl() {
@@ -181,7 +302,9 @@ export async function startRepl() {
   });
 
   console.log("\nTypeScript Utility Types Interactive Lab");
-  console.log("Type 'tour' for guided walkthrough, 'help' for commands, or 'exit' to quit.\n");
+  console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', or 'probe 5'.");
+  console.log("Type 'step' for interactive pause-and-continue walkthrough.");
+  console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");
   rl.prompt();
 
   for await (const line of rl) {
@@ -197,14 +320,30 @@ export async function startRepl() {
       break;
     } else if (cmd === "help") {
       console.log("\nAvailable commands:");
+      console.log("  probe 1                      Run Probe 1: Partial<T> mapped loop");
+      console.log("  probe 2                      Run Probe 2: Pick<T, K> and constraint check");
+      console.log("  probe 3                      Run Probe 3: Omit<T, K> inverted pick");
+      console.log("  probe 4                      Run Probe 4: Distributive conditional Exclude");
+      console.log("  probe 5                      Run Probe 5: Type destructuring with infer");
+      console.log("  step                         Interactive stepped walkthrough (press Enter between probes)");
       console.log("  tour                         Run full guided walkthrough");
-      console.log("  machinery                    Probe mapped types, distribution, and infer");
+      console.log("  machinery                    Run all mapped & conditional probes (1-5)");
       console.log("  distribute <u1,u2> <ex1,ex2> Probe distributive conditional Exclude");
       console.log("  partial <json_shape>         Run Partial<T> on shape");
       console.log("  pick <json_shape> <k1,k2>    Run Pick<T, K> on shape");
       console.log("  omit <json_shape> <k1,k2>    Run Omit<T, K> on shape");
       console.log("  infer <signature>            Run infer pattern extractor");
       console.log("  exit                         Exit interactive lab\n");
+    } else if (cmd === "probe") {
+      const num = args[0];
+      if (num === "1") console.log("\n" + runProbe1() + "\n");
+      else if (num === "2") console.log("\n" + runProbe2() + "\n");
+      else if (num === "3") console.log("\n" + runProbe3() + "\n");
+      else if (num === "4") console.log("\n" + runProbe4() + "\n");
+      else if (num === "5") console.log("\n" + runProbe5() + "\n");
+      else console.log("Unknown probe number. Choose 'probe 1' through 'probe 5'.");
+    } else if (cmd === "step") {
+      await runSteppedSession();
     } else if (cmd === "tour" || cmd === "machinery") {
       console.log("\n" + runMachineryTour() + "\n");
     } else if (cmd === "distribute") {
@@ -235,7 +374,17 @@ export async function startRepl() {
 const args = process.argv.slice(2);
 const firstArg = args[0];
 
-if (firstArg === "--tour" || firstArg === "tour" || firstArg === "--topic=machinery" || firstArg === "machinery") {
+if (firstArg === "--step" || firstArg === "step") {
+  await runSteppedSession();
+} else if (firstArg === "probe") {
+  const num = args[1];
+  if (num === "1") console.log(runProbe1());
+  else if (num === "2") console.log(runProbe2());
+  else if (num === "3") console.log(runProbe3());
+  else if (num === "4") console.log(runProbe4());
+  else if (num === "5") console.log(runProbe5());
+  else console.log("Choose probe 1 through 5");
+} else if (firstArg === "--tour" || firstArg === "tour" || firstArg === "--topic=machinery" || firstArg === "machinery") {
   console.log(runMachineryTour());
 } else if (firstArg === "distribute") {
   const u = (args[1] || "").split(",");

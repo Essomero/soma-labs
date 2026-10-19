@@ -1,36 +1,47 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { probeMapped, probeDistribution, probeInfer, runMachineryTour } from "../lab.mjs";
+import {
+  probeMapped,
+  probeDistribution,
+  probeInfer,
+  runProbe1,
+  runProbe2,
+  runProbe3,
+  runProbe4,
+  runProbe5,
+  runMachineryTour,
+} from "../lab.mjs";
 
-test("probeMapped handles partial", () => {
-  const result = probeMapped({ id: "string" }, "partial");
-  assert.match(result, /id\?: string/);
+test("runProbe1 details Partial<T> mapped loop", () => {
+  const result = runProbe1();
+  assert.match(result, /type Partial<T> = \{ \[K in keyof T\]\?: T\[K\] \}/);
+  assert.match(result, /keyof User -> \["id", "email", "role", "age"\]/);
 });
 
-test("probeMapped handles pick constraint check", () => {
-  const pass = probeMapped({ id: "string", name: "string" }, "pick", ["id"]);
-  assert.match(pass, /VALID/);
-
-  const fail = probeMapped({ id: "string" }, "pick", ["salary"]);
-  assert.match(fail, /Constraint Check: FAILED/);
+test("runProbe2 details Pick<T, K> and constraint check", () => {
+  const result = runProbe2();
+  assert.match(result, /type Pick<T, K extends keyof T>/);
+  assert.match(result, /TS2344/);
 });
 
-test("probeDistribution illustrates distributive conditionals", () => {
-  const result = probeDistribution(["a", "b", "c"], ["b"]);
-  assert.match(result, /Step 1 — Distribution/);
-  assert.match(result, /"b" extends "b" \? never : "b"\s+==>\s+never/);
-  assert.match(result, /Result: "a" \| "c"/);
+test("runProbe3 details Omit<T, K> inverted pick", () => {
+  const result = runProbe3();
+  assert.match(result, /type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>/);
 });
 
-test("probeInfer extracts types", () => {
-  const arr = probeInfer("string[]");
-  assert.match(arr, /Extracted Element Type E: string/);
+test("runProbe4 details conditional distribution", () => {
+  const result = runProbe4();
+  assert.match(result, /type Exclude<T, U> = T extends U \? never : T/);
+  assert.match(result, /"click" \| "scroll"/);
+});
 
-  const fn = probeInfer("() => number");
-  assert.match(fn, /Extracted Return Type R: number/);
+test("runProbe5 details infer pattern matching", () => {
+  const result = runProbe5();
+  assert.match(result, /type ElementOf<T> = T extends \(infer E\)\[\] \? E : never/);
+  assert.match(result, /Promise<User>/);
 });
 
 test("guided tour runs cleanly", () => {
   const tour = runMachineryTour();
-  assert.ok(tour.length > 200);
+  assert.ok(tour.length > 300);
 });

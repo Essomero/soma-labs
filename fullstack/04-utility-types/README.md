@@ -10,9 +10,15 @@ In this lab, you probe:
 
 **How to drive it:**
 ```bash
-npm run lab            # interactive REPL (probe mapped operations, test union distribution)
-npm run tour           # guided tour across mapped types, distribution, and infer
-npm run lab:machinery  # probe mapped types and distributive conditional types
+npm run lab            # interactive REPL (test custom shapes and operations)
+npm run lab:step       # interactive stepped session (pauses between probes)
+npm run lab:probe-1    # Probe 1: Partial<T> mapped loop
+npm run lab:probe-2    # Probe 2: Pick<T, K> and keyed constraint check
+npm run lab:probe-3    # Probe 3: Omit<T, K> as inverted pick
+npm run lab:probe-4    # Probe 4: Distributive conditional Exclude
+npm run lab:probe-5    # Probe 5: Pattern matching and type extraction with infer
+npm run lab:machinery  # run all mapped and conditional probes (1-5)
+npm run tour           # full guided tour
 ```
 
 ## Quick Start
