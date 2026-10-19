@@ -10,9 +10,16 @@ In this lab, you probe:
 **How to drive it:**
 ```bash
 npm run lab              # interactive REPL (probe custom shapes, test states, trigger traps)
-npm run tour             # guided tour across shape dispatchers and async state
-npm run lab:dispatcher   # probe literal discriminants and assertNever exhaustiveness
-npm run lab:async-state  # probe async-state exclusivity and the destructuring trap
+npm run lab:step         # interactive stepped session (pauses between probes)
+npm run lab:probe-1      # Probe 1: Circle variant dispatch and narrowing
+npm run lab:probe-2      # Probe 2: Square variant dispatch
+npm run lab:probe-3      # Probe 3: Rectangle variant dispatch
+npm run lab:probe-4      # Probe 4: Unhandled variant and assertNever exhaustiveness
+npm run lab:probe-5      # Probe 5: Async state mutual exclusivity
+npm run lab:probe-6      # Probe 6: The destructuring trap simulation
+npm run lab:dispatcher   # probe literal discriminants and assertNever exhaustiveness (probes 1-4)
+npm run lab:async-state  # probe async-state exclusivity and the destructuring trap (probes 5-6)
+npm run tour             # full guided tour
 ```
 ## Quick Start
 

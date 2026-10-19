@@ -3,40 +3,53 @@ import assert from "node:assert/strict";
 import {
   probeShape,
   probeState,
+  runProbe1,
+  runProbe2,
+  runProbe3,
+  runProbe4,
+  runProbe5,
+  runProbe6,
   runDispatcherTour,
   runAsyncStateTour,
   runFullTour,
 } from "../lab.mjs";
 
-test("probeShape handles known circle variant", () => {
-  const result = probeShape({ kind: "circle", radius: 5 });
-  assert.match(result, /Eliminated \[Square, Rect\]/);
-  assert.match(result, /Computed Area:\s+78\.54/);
-  assert.match(result, /Exhaustiveness:\s+HANDLED/);
+test("runProbe1 details circle dispatch", () => {
+  const result = runProbe1();
+  assert.match(result, /type Shape = Circle \| Square \| Rect/);
+  assert.match(result, /78\.54/);
 });
 
-test("probeShape catches unhandled variant via assertNever", () => {
-  const result = probeShape({ kind: "triangle", base: 10, height: 5 });
-  assert.match(result, /TRIGGERED assertNever/);
-  assert.match(result, /BLOCKED/);
+test("runProbe4 details assertNever exhaustiveness", () => {
+  const result = runProbe4();
+  assert.match(result, /assertNever\(value: never\)/);
+  assert.match(result, /COMPILER RED SQUIGGLE/);
 });
 
-test("probeState handles async success", () => {
-  const result = probeState({ status: "success", data: "ok" });
-  assert.match(result, /PASSED \(data and error never coexist\)/);
+test("runProbe5 details async state union exclusivity", () => {
+  const result = runProbe5();
+  assert.match(result, /type AsyncState<T> = Idle \| Loading \| Success<T> \| Error/);
 });
 
-test("probeState explains the destructuring trap", () => {
-  const result = probeState({ status: "success", data: "ok" }, { destructured: true });
+test("runProbe6 details the destructuring trap", () => {
+  const result = runProbe6();
   assert.match(result, /DESTRUCTURING TRAP/);
-  assert.match(result, /Keep the object intact and narrow on property/);
+  assert.match(result, /The Senior Fix/);
 });
 
-test("guided tour runs cleanly", () => {
+test("probeShape and probeState programmatic tests", () => {
+  const s = probeShape({ kind: "square", side: 4 });
+  assert.match(s, /Narrowed to Square/);
+
+  const a = probeState({ status: "loading" });
+  assert.match(a, /kind":"spinner/);
+});
+
+test("guided tours run cleanly", () => {
   const d = runDispatcherTour();
-  assert.ok(d.length > 100);
+  assert.ok(d.length > 200);
   const s = runAsyncStateTour();
-  assert.ok(s.length > 100);
+  assert.ok(s.length > 200);
   const f = runFullTour();
-  assert.ok(f.length > 200);
+  assert.ok(f.length > 400);
 });
