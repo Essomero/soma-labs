@@ -10,7 +10,7 @@ import {
   runRelationshipTour,
   runConstraintsTour,
   runFullTour,
-} from "../lab.mjs";
+} from "../lab.ts";
 
 test("runProbe1 details the primitive identity relationship and compiler steps", () => {
   const result = runProbe1();

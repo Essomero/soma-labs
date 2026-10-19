@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run -A
 /**
  * TypeScript Generics Lab — Interactive Relationship & Constraint Simulator
  *
@@ -8,34 +8,34 @@
  *   2. The Constraint: how K extends keyof T acts as both entrance gate and body license.
  *
  * Usage:
- *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
- *   node lab.mjs probe 1          Run ONLY Probe 1 (Primitive Value)
- *   node lab.mjs probe 2          Run ONLY Probe 2 (Array Element-Type)
- *   node lab.mjs probe 3          Run ONLY Probe 3 (Object Shape & Downstream Access)
- *   node lab.mjs relationship     Run all 3 relationship probes
- *   node lab.mjs constraints      Run constraint gate & license probe
- *   node lab.mjs compare <val>    Compare signatures on custom value
- *   node lab.mjs get <obj> <key>  Test keyed constraint on object
+ *   deno run -A lab.ts            Interactive REPL session (or tour in non-interactive shell)
+ *   deno run -A lab.ts --step     Interactive step-by-step walkthrough (pauses between probes)
+ *   deno run -A lab.ts probe 1    Run ONLY Probe 1 (Primitive Value)
+ *   deno run -A lab.ts probe 2    Run ONLY Probe 2 (Array Element-Type)
+ *   deno run -A lab.ts probe 3    Run ONLY Probe 3 (Object Shape & Downstream Access)
+ *   deno run -A lab.ts relationship Run all 3 relationship probes
+ *   deno run -A lab.ts constraints  Run constraint gate & license probe
+ *   deno run -A lab.ts compare <val> Compare signatures on custom value
+ *   deno run -A lab.ts get <obj> <key> Test keyed constraint on object
  */
 
 import readline from "node:readline";
-import { identity, identityAny, identityUnknown, tagOf } from "./src/relationship.mjs";
-import { at, requireMembers } from "./src/constraints.mjs";
+import { identity, identityAny, identityUnknown, tagOf } from "./src/relationship.ts";
+import { at, requireMembers } from "./src/constraints.ts";
 
-export function formatValue(val) {
+export function formatValue(val: unknown): string {
   return JSON.stringify(val);
 }
 
-export function runProbe1() {
-  const out = [];
+export function runProbe1(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 1/3] Primitive Value: The Identity Relationship");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.mjs):");
-  out.push("  function identity<T>(value: T): T { return value; }");
-  out.push("  function identityAny(value: any): any { return value; }");
-  out.push("  function identityUnknown(value: unknown): unknown { return value; }");
+  out.push("\nCode Under Test (src/relationship.ts):");
+  out.push("  function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }");
+  out.push("  function identityAny(value: any): { tag: string; value: any } { return { tag: \"any\", value }; }");
+  out.push("  function identityUnknown(value: unknown): { tag: string; value: unknown } { return { tag: \"unknown\", value }; }");
 
   out.push("\nExecution at Call Site:");
   out.push("  const input = \"hello\";");
@@ -66,13 +66,13 @@ export function runProbe1() {
   return out.join("\n");
 }
 
-export function runProbe2() {
-  const out = [];
+export function runProbe2(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 2/3] Array Value: Element-Type Relationship");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.mjs):");
-  out.push("  function identity<T>(value: T): T { return value; }");
+  out.push("\nCode Under Test (src/relationship.ts):");
+  out.push("  function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }");
   out.push("  function first<T>(arr: T[]): T | undefined { return arr[0]; }");
 
   out.push("\nExecution at Call Site:");
@@ -93,12 +93,12 @@ export function runProbe2() {
   return out.join("\n");
 }
 
-export function runProbe3() {
-  const out = [];
+export function runProbe3(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 3/3] Object Shape: Downstream Property Access");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.mjs):");
+  out.push("\nCode Under Test (src/relationship.ts):");
   out.push("  interface User { id: number; name: string; role: string; }");
   out.push("  const user: User = { id: 101, name: \"Ada Lovelace\", role: \"admin\" };");
   out.push("  const result = identity(user);");
@@ -122,11 +122,11 @@ export function runProbe3() {
   return out.join("\n");
 }
 
-export function runRelationshipTour() {
+export function runRelationshipTour(): string {
   return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3()].join("\n");
 }
 
-export function probeRelationship(value) {
+export function probeRelationship(value: unknown): string {
   const tag = tagOf(value);
   const genResult = identity(value);
   const anyResult = identityAny(value);
@@ -143,7 +143,7 @@ export function probeRelationship(value) {
   return lines.join("\n");
 }
 
-export function probeConstraintAt(obj, key) {
+export function probeConstraintAt(obj: any, key: any): string {
   const allowedKeys = Object.keys(obj ?? {});
   const isAllowed = allowedKeys.includes(key);
 
@@ -170,7 +170,7 @@ export function probeConstraintAt(obj, key) {
   return lines.join("\n");
 }
 
-export function probeConstraintRequire(obj, requiredMembers) {
+export function probeConstraintRequire(obj: any, requiredMembers: string[]): string {
   const lines = [
     `Tested Function: requireMembers(value, members): representing <T extends { ${requiredMembers.join(", ")} }>(val: T): T`,
     `Input value:     ${formatValue(obj)}`,
@@ -181,14 +181,14 @@ export function probeConstraintRequire(obj, requiredMembers) {
     lines.push(
       `  Entrance Gate:    PASS (satisfies required members: [${requiredMembers.join(", ")}])`,
     );
-  } catch (err) {
+  } catch (err: any) {
     lines.push(`  Entrance Gate:    REFUSED (${err.message})`);
   }
   return lines.join("\n");
 }
 
-export function runConstraintsTour() {
-  const out = [];
+export function runConstraintsTour(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  TypeScript Generics Lab: The Constraint as License and Gate");
   out.push("================================================================================");
@@ -208,11 +208,11 @@ export function runConstraintsTour() {
   return out.join("\n");
 }
 
-export function runFullTour() {
+export function runFullTour(): string {
   return [runRelationshipTour(), "\n" + runConstraintsTour()].join("\n");
 }
 
-function parseJsonOrRaw(input) {
+function parseJsonOrRaw(input: string): any {
   try {
     return JSON.parse(input);
   } catch {
@@ -220,13 +220,13 @@ function parseJsonOrRaw(input) {
   }
 }
 
-async function waitForEnter(rl, promptText) {
-  return new Promise((resolve) => {
-    rl.question(promptText, () => resolve());
-  });
+function waitForEnter(rl: readline.Interface, promptText: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  rl.question(promptText, () => resolve());
+  return promise;
 }
 
-export async function runSteppedSession() {
+export async function runSteppedSession(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -241,18 +241,18 @@ export async function runSteppedSession() {
   await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/3: Object Shape & Downstream Access] ");
 
   console.log("\n" + runProbe3());
-  console.log("\nAll 3 probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  console.log("\nAll 3 probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
-export async function startRepl() {
+export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "lab-generics> ",
   });
 
-  console.log("\nTypeScript Generics Interactive Lab");
+  console.log("\nTypeScript Generics Interactive Lab (running with Deno)");
   console.log("Type 'probe 1', 'probe 2', or 'probe 3' to run individual probes.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

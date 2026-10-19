@@ -1,16 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getById } from "../src/p1_constrained_wrapper.mjs";
+import { getById } from "../src/p1_constrained_wrapper.ts";
 
 const USERS = [
   { id: "u1", name: "ada" },
   { id: "u2", name: "grace" },
 ];
 
-function outcome(fn) {
+function outcome(fn: () => unknown): string {
   try {
     return `returned ${JSON.stringify(fn())}`;
-  } catch (error) {
+  } catch (error: any) {
     return `threw ${error.message}`;
   }
 }
@@ -24,7 +24,7 @@ test("Problem 1: a list with no match returns undefined, not a throw", () => {
 });
 
 test("Problem 1: an item that does not satisfy the constraint is refused, naming the index", () => {
-  const malformed = [{ id: "u1" }, { name: "ghost" }];
+  const malformed = [{ id: "u1" }, { name: "ghost" }] as any;
   assert.throws(
     () => getById(malformed, "u1"),
     /item at index 1 does not satisfy \{ id: string \}/,

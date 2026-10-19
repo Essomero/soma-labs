@@ -8,7 +8,10 @@
  * member access happens.
  */
 
-export function requireMembers(value, members) {
+export function requireMembers<T extends Record<string, unknown>>(
+  value: unknown,
+  members: string[],
+): T {
   const missing = members.filter(
     (member) =>
       value === null ||
@@ -20,16 +23,19 @@ export function requireMembers(value, members) {
       `does not satisfy the constraint: missing ${missing.join(", ")}`,
     );
   }
-  return value;
+  return value as T;
 }
 
-export function at(object, key) {
+export function at<T extends Record<string, unknown>, K extends keyof T>(
+  object: T,
+  key: K,
+): T[K] {
   if (
     object === null ||
     typeof object !== "object" ||
     !Object.prototype.hasOwnProperty.call(object, key)
   ) {
-    throw new RangeError(`key '${key}' is not a key of the object`);
+    throw new RangeError(`key '${String(key)}' is not a key of the object`);
   }
   return object[key];
 }
