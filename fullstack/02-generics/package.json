@@ -6,6 +6,10 @@
   "scripts": {
     "lab": "node lab.mjs",
     "tour": "node lab.mjs --tour",
+    "lab:step": "node lab.mjs --step",
+    "lab:probe-1": "node lab.mjs probe 1",
+    "lab:probe-2": "node lab.mjs probe 2",
+    "lab:probe-3": "node lab.mjs probe 3",
     "lab:relationship": "node lab.mjs --topic=relationship",
     "lab:constraints": "node lab.mjs --topic=constraints",
     "test": "node --test tests/*.test.mjs",

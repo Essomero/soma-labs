@@ -9,10 +9,14 @@ In this lab, you probe:
 
 **How to drive it:**
 ```bash
-npm run lab          # interactive REPL (probe values, test constraints)
-npm run tour         # guided tour across all relationship and constraint scenarios
-npm run lab:relationship # probe the identity relationship specifically
+npm run lab              # interactive REPL (test custom values, run individual probes)
+npm run lab:step         # interactive stepped session (pauses between probes)
+npm run lab:probe-1      # Probe 1: Primitive value into identity(x) vs identityAny vs identityUnknown
+npm run lab:probe-2      # Probe 2: Array value and element-type preservation in first(arr)
+npm run lab:probe-3      # Probe 3: Object shape and downstream member access (.name vs .ghostField)
+npm run lab:relationship # run all 3 relationship probes together
 npm run lab:constraints  # probe the constraint gate and license specifically
+npm run tour             # full guided tour
 ```
 ## Quick Start
 

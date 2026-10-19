@@ -4,24 +4,42 @@ import {
   probeRelationship,
   probeConstraintAt,
   probeConstraintRequire,
+  runProbe1,
+  runProbe2,
+  runProbe3,
   runRelationshipTour,
   runConstraintsTour,
   runFullTour,
 } from "../lab.mjs";
 
-test("probeRelationship shows relationship preservation vs erasure", () => {
-  const result = probeRelationship("test-str");
-  assert.match(result, /Inferred T:\s+string/);
-  assert.match(result, /generic <T>\(x: T\): T\s+-> return tag: string/);
-  assert.match(result, /any \(x: any\): any\s+-> return tag: any/);
-  assert.match(result, /unknown \(x: unk\): unk\s+-> return tag: unknown/);
+test("runProbe1 details the primitive identity relationship and compiler steps", () => {
+  const result = runProbe1();
+  assert.match(result, /function identity<T>\(value: T\): T/);
+  assert.match(result, /Parameter 'value: T' receives argument "hello"/);
+  assert.match(result, /Binds type parameter T := string/);
+  assert.match(result, /result\.toUpperCase\(\) is VALID/);
+  assert.match(result, /identityAny\("hello"\)/);
+  assert.match(result, /identityUnknown\("hello"\)/);
+});
+
+test("runProbe2 details the array element type preservation", () => {
+  const result = runProbe2();
+  assert.match(result, /first<T>\(arr: T\[\]\)/);
+  assert.match(result, /Binds T := number\[\]/);
+});
+
+test("runProbe3 details object shapes and downstream member access", () => {
+  const result = runProbe3();
+  assert.match(result, /result\.name:\s+Property exists on T/);
+  assert.match(result, /result\.ghostField:\s+Property does NOT exist on T!/);
+  assert.match(result, /TS2339/);
 });
 
 test("probeConstraintAt confirms gate pass on valid key", () => {
   const result = probeConstraintAt({ id: 1, name: "Ada" }, "name");
   assert.match(result, /Entrance Gate:\s+PASS/);
   assert.match(result, /Internal License:\s+GRANTED/);
-  assert.match(result, /Result:\s+"Ada"/);
+  assert.match(result, /Result value:\s+"Ada"/);
 });
 
 test("probeConstraintAt confirms gate refusal on invalid key", () => {
@@ -38,11 +56,11 @@ test("probeConstraintRequire validates entrance member requirement", () => {
   assert.match(fail, /Entrance Gate:\s+REFUSED/);
 });
 
-test("guided tour runs without errors", () => {
+test("guided tours run cleanly", () => {
   const rel = runRelationshipTour();
-  assert.ok(rel.length > 100);
+  assert.ok(rel.length > 200);
   const con = runConstraintsTour();
-  assert.ok(con.length > 100);
+  assert.ok(con.length > 200);
   const full = runFullTour();
-  assert.ok(full.length > 200);
+  assert.ok(full.length > 400);
 });
