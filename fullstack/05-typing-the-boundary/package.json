@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lab": "node lab.mjs",
+    "tour": "node lab.mjs --tour",
+    "lab:boundary": "node lab.mjs --topic=boundary",
     "test": "node --test tests/*.test.mjs",
     "test:lesson": "node --test tests/schema.test.mjs tests/boundary.test.mjs",
     "test:p1": "node --test tests/p1_boundary_audit.test.mjs",

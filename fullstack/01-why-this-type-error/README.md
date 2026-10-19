@@ -1,11 +1,19 @@
 # Lab: Reading the Type Checker (`fullstack/01-why-this-type-error`)
 
-Hands-on workbench for `L1 — Why Does This TypeScript Error?`.
+Hands-on workbench for `L1: Why Does This TypeScript Error?`.
 
-The lesson's mental model — *a value is assignable to a shape when every member the shape requires is
-present with a compatible type* — is written down here as runnable code. The demo modules pass; the
-three practice problems ship broken and fail.
+A lab exists so you drive experiments, not just watch tests pass.
+In this lab, you probe:
+1. **Structural Assignability & Freshness**: why variables with extra properties are assignable, but fresh literals trigger the excess property check.
+2. **The Five Error Families**: what the checker asserts, what the naive fix discards, and what the senior fix is.
 
+**How to drive it:**
+```bash
+npm run lab               # interactive REPL (probe values, test shapes, classify errors)
+npm run tour              # guided tour across assignability and error families
+npm run lab:assignability # probe structural assignability and excess property check
+npm run lab:family        # probe the error family diagnostic matrix
+```
 ## Quick Start
 
 ### Option A — Docker Compose (recommended)
@@ -23,8 +31,9 @@ docker compose run --rm test npm run test:p1
 This workspace uses Node's built-in test runner. There is no `node_modules` to install:
 
 ```bash
-npm run test:lesson   # the two demo suites — must pass
-npm run test:p1       # problem 1 — fails until you fix it
+npm run tour         # see the guided tour
+npm run test:lesson  # regression guard for the lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
 npm run test:p2
 npm run test:p3
 ```

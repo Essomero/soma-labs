@@ -1,12 +1,19 @@
 # Lab: Typing the Boundary (`fullstack/05-typing-the-boundary`)
 
-Hands-on workbench for `L5 — Typing the Boundary: unknown vs any, and Parse Don't Validate`.
+Hands-on workbench for `L5: unknown or any?`.
 
-The lesson's claim — *the type system's guarantees end at the boundary, so you parse there instead of
-casting* — is written down here as runnable code. A miniature zod shows the schema as the single
-source of truth (`parse`, `safeParse`, `describe`, `transform`), and the boundary module shows the two
-doors untrusted data arrives through. The demo modules pass; the three practice problems ship broken
-and fail.
+A lab exists so you drive experiments, not just watch tests pass.
+In this lab, you probe:
+1. **The Two Doors**: Door A (The Cast `as User`) vs Door B (The Schema Gate `safeParse`).
+2. **Downstream Execution Hazards**: why type casting causes runtime crashes on missing or corrupted data.
+3. **API Drift Detection**: catching when backend responses drift from internal contracts.
+
+**How to drive it:**
+```bash
+npm run lab           # interactive REPL (test payloads through Door A and Door B)
+npm run tour          # guided tour across valid, missing, corrupt, and drifted payloads
+npm run lab:boundary  # probe the trust boundary comparison specifically
+```
 
 ## Quick Start
 
@@ -23,10 +30,10 @@ docker compose run --rm test npm run test:p1
 ### Option B — Native Node (Node 20+, no dependencies)
 
 This workspace uses Node's built-in test runner. There is no `node_modules` to install:
-
 ```bash
-npm run test:lesson   # the two demo suites — must pass
-npm run test:p1       # problem 1 — fails until you fix it
+npm run tour         # see the guided tour
+npm run test:lesson  # regression guard for the lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
 npm run test:p2
 npm run test:p3
 ```

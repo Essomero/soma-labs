@@ -4,6 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lab": "node lab.mjs",
+    "tour": "node lab.mjs --tour",
+    "lab:dispatcher": "node lab.mjs --topic=dispatcher",
+    "lab:async-state": "node lab.mjs --topic=async-state",
     "test": "node --test tests/*.test.mjs",
     "test:lesson": "node --test tests/dispatcher.test.mjs tests/async_state.test.mjs",
     "test:dispatcher": "node --test tests/dispatcher.test.mjs",

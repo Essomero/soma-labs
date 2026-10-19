@@ -4,6 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lab": "node lab.mjs",
+    "tour": "node lab.mjs --tour",
+    "lab:relationship": "node lab.mjs --topic=relationship",
+    "lab:constraints": "node lab.mjs --topic=constraints",
     "test": "node --test tests/*.test.mjs",
     "test:lesson": "node --test tests/relationship.test.mjs tests/constraints.test.mjs",
     "test:relationship": "node --test tests/relationship.test.mjs",

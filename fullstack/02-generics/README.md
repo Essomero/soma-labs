@@ -1,11 +1,19 @@
 # Lab: Generics as Relationships (`fullstack/02-generics`)
 
-Hands-on workbench for `L2 — Write a Generic That Earns Its Place`.
+Hands-on workbench for `L2: Write a Generic That Earns Its Place`.
 
-The lesson's claim — *a generic asserts a relationship between types, not a
-decoration* — is written down here as runnable code. The demo modules pass; the
-three practice problems ship broken and fail.
+A lab exists so you drive experiments, not just watch tests pass.
+In this lab, you probe:
+1. **The Relationship**: why `<T>(x: T): T` preserves types while `any` erases them and `unknown` refuses access.
+2. **Constraints as Gate & License**: why `K extends keyof T` gates callers before runtime and licenses member indexing inside the body.
 
+**How to drive it:**
+```bash
+npm run lab          # interactive REPL (probe values, test constraints)
+npm run tour         # guided tour across all relationship and constraint scenarios
+npm run lab:relationship # probe the identity relationship specifically
+npm run lab:constraints  # probe the constraint gate and license specifically
+```
 ## Quick Start
 
 ### Option A — Docker Compose (recommended)
@@ -23,8 +31,9 @@ docker compose run --rm test npm run test:p1
 This workspace uses Node's built-in test runner. There is no `node_modules` to install:
 
 ```bash
-npm run test:lesson   # the two demo suites — must pass
-npm run test:p1       # problem 1 — fails until you fix it
+npm run tour         # see the guided tour
+npm run test:lesson  # regression guard for the lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
 npm run test:p2
 npm run test:p3
 ```

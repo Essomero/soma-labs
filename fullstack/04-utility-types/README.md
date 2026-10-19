@@ -1,11 +1,19 @@
 # Lab: Utility Types & Mapped Machinery (`fullstack/04-utility-types`)
 
-Hands-on workbench for `L4 — Utility Types & the Mapped-Type Machinery`.
+Hands-on workbench for `L4: How Does Pick Work?`.
 
-The lesson's claim — *a utility type is a recipe in a small language over shapes* — is written down
-here as runnable code. `Partial`, `Pick`, `Omit`, `Record`, `Exclude`, `NonNullable`, and `infer` are
-rebuilt from `keyof`, the mapped loop, and the conditional's distribution. The demo modules pass; the
-three practice problems ship broken and fail.
+A lab exists so you drive experiments, not just watch tests pass.
+In this lab, you probe:
+1. **The Mapped Type Machinery**: how `keyof`, `[K in keyof T]`, and `T[K]` rebuild types from types.
+2. **Distributive Conditional Types**: how conditionals distribute member by member across unions.
+3. **Pattern Matching with infer**: destructuring types inside patterns.
+
+**How to drive it:**
+```bash
+npm run lab            # interactive REPL (probe mapped operations, test union distribution)
+npm run tour           # guided tour across mapped types, distribution, and infer
+npm run lab:machinery  # probe mapped types and distributive conditional types
+```
 
 ## Quick Start
 
@@ -22,10 +30,10 @@ docker compose run --rm test npm run test:p1
 ### Option B — Native Node (Node 20+, no dependencies)
 
 This workspace uses Node's built-in test runner. There is no `node_modules` to install:
-
 ```bash
-npm run test:lesson   # the two demo suites — must pass
-npm run test:p1       # problem 1 — fails until you fix it
+npm run tour         # see the guided tour
+npm run test:lesson  # regression guard for the lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
 npm run test:p2
 npm run test:p3
 ```

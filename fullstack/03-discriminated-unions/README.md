@@ -1,11 +1,19 @@
 # Lab: Discriminated Unions & Exhaustiveness (`fullstack/03-discriminated-unions`)
 
-Hands-on workbench for `L3 — Model the States So Illegal Ones Can't Exist`.
+Hands-on workbench for `L3: Model This as a Discriminated Union`.
 
-The lesson's pattern — *a literal discriminant plus a narrowing dispatcher plus
-an exhaustive `never` branch* — is written down here as runnable code. The demo
-modules pass; the three practice problems ship broken and fail.
+A lab exists so you drive experiments, not just watch tests pass.
+In this lab, you probe:
+1. **Control-Flow Narrowing & Exhaustiveness**: how literal discriminants eliminate variants branch by branch, and how `assertNever` catches unhandled variants.
+2. **Async State & The Destructuring Trap**: why destructuring before narrowing detaches properties from the discriminant.
 
+**How to drive it:**
+```bash
+npm run lab              # interactive REPL (probe custom shapes, test states, trigger traps)
+npm run tour             # guided tour across shape dispatchers and async state
+npm run lab:dispatcher   # probe literal discriminants and assertNever exhaustiveness
+npm run lab:async-state  # probe async-state exclusivity and the destructuring trap
+```
 ## Quick Start
 
 ### Option A — Docker Compose (recommended)
@@ -23,8 +31,9 @@ docker compose run --rm test npm run test:p1
 This workspace uses Node's built-in test runner. There is no `node_modules` to install:
 
 ```bash
-npm run test:lesson   # the two demo suites — must pass
-npm run test:p1       # problem 1 — fails until you fix it
+npm run tour         # see the guided tour
+npm run test:lesson  # regression guard for the lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
 npm run test:p2
 npm run test:p3
 ```

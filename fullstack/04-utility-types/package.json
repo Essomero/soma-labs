@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lab": "node lab.mjs",
+    "tour": "node lab.mjs --tour",
+    "lab:machinery": "node lab.mjs --topic=machinery",
     "test": "node --test tests/*.test.mjs",
     "test:lesson": "node --test tests/shape_ops.test.mjs tests/conditional_types.test.mjs",
     "test:p1": "node --test tests/p1_my_utilities.test.mjs",
