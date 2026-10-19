@@ -4,18 +4,19 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lab": "node lab.mjs",
-    "tour": "node lab.mjs --tour",
-    "lab:step": "node lab.mjs --step",
-    "lab:probe-1": "node lab.mjs probe 1",
-    "lab:probe-2": "node lab.mjs probe 2",
-    "lab:probe-3": "node lab.mjs probe 3",
-    "lab:probe-4": "node lab.mjs probe 4",
-    "lab:boundary": "node lab.mjs --topic=boundary",
-    "test": "node --test tests/*.test.mjs",
-    "test:lesson": "node --test tests/schema.test.mjs tests/boundary.test.mjs",
-    "test:p1": "node --test tests/p1_boundary_audit.test.mjs",
-    "test:p2": "node --test tests/p2_assignability.test.mjs",
-    "test:p3": "node --test tests/p3_drift_gate.test.mjs"
+    "lab": "deno run -A lab.ts",
+    "tour": "deno run -A lab.ts --tour",
+    "lab:step": "deno run -A lab.ts --step",
+    "lab:probe-1": "deno run -A lab.ts probe 1",
+    "lab:probe-2": "deno run -A lab.ts probe 2",
+    "lab:probe-3": "deno run -A lab.ts probe 3",
+    "lab:probe-4": "deno run -A lab.ts probe 4",
+    "lab:boundary": "deno run -A lab.ts --topic=boundary",
+    "typecheck": "deno check --node-modules-dir=auto lab.ts src/*.ts",
+    "test": "deno test -A --node-modules-dir=auto tests/*.test.ts",
+    "test:lesson": "deno test -A --node-modules-dir=auto tests/schema.test.ts tests/boundary.test.ts",
+    "test:p1": "deno test -A --node-modules-dir=auto tests/p1_boundary_audit.test.ts",
+    "test:p2": "deno test -A --node-modules-dir=auto tests/p2_assignability.test.ts",
+    "test:p3": "deno test -A --node-modules-dir=auto tests/p3_drift_gate.test.ts"
   }
 }

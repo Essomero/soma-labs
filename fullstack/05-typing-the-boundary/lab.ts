@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run -A
 /**
  * TypeScript Trust Boundary Lab — Cast vs Schema Validation Simulator
  *
@@ -8,14 +8,14 @@
  *   3. Schema Drift: Catching when external API payloads drift from internal contracts.
  *
  * Usage:
- *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
- *   node lab.mjs probe 1          Run ONLY Probe 1 (Valid Untrusted Payload)
- *   node lab.mjs probe 2          Run ONLY Probe 2 (Missing Required Field: Runtime Crash vs Gate Catch)
- *   node lab.mjs probe 3          Run ONLY Probe 3 (Incompatible Type: Type Lie vs Schema Catch)
- *   node lab.mjs probe 4          Run ONLY Probe 4 (API Schema Drift Detection)
- *   node lab.mjs boundary         Run trust boundary comparison probes (1-4)
- *   node lab.mjs test <raw_json>  Test raw JSON through both doors
+ *   deno run -A lab.ts            Interactive REPL session (or tour in non-interactive shell)
+ *   deno run -A lab.ts --step     Interactive step-by-step walkthrough (pauses between probes)
+ *   deno run -A lab.ts probe 1    Run ONLY Probe 1 (Valid Untrusted Payload)
+ *   deno run -A lab.ts probe 2    Run ONLY Probe 2 (Missing Required Field: Runtime Crash vs Gate Catch)
+ *   deno run -A lab.ts probe 3    Run ONLY Probe 3 (Incompatible Type: Type Lie vs Schema Catch)
+ *   deno run -A lab.ts probe 4    Run ONLY Probe 4 (API Schema Drift Detection)
+ *   deno run -A lab.ts boundary   Run trust boundary comparison probes (1-4)
+ *   deno run -A lab.ts test <raw_json> Test raw JSON through both doors
  */
 
 import readline from "node:readline";
@@ -29,19 +29,20 @@ import {
   boolean,
   enumeration,
   array,
-} from "./src/schema.mjs";
-import { readJson, decode } from "./src/boundary.mjs";
+  type Schema,
+} from "./src/schema.ts";
+import { readJson, decode } from "./src/boundary.ts";
 
-export function formatJson(val) {
+export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
-export function runProbe1() {
-  const out = [];
+export function runProbe1(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 1/4] Trust Boundary: Valid Untrusted Payload");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/schema.mjs & src/boundary.mjs):");
+  out.push("\nCode Under Test (src/schema.ts & src/boundary.ts):");
   out.push("  const userSchema = object({ id: string(), name: string(), email: string(), role: enumeration([\"admin\", \"member\"]) });");
   out.push("  function safeParse(schema, value);");
 
@@ -55,8 +56,8 @@ export function runProbe1() {
   return out.join("\n");
 }
 
-export function runProbe2() {
-  const out = [];
+export function runProbe2(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 2/4] Missing Required Field: The Type Cast Crash");
   out.push("================================================================================");
@@ -81,8 +82,8 @@ export function runProbe2() {
   return out.join("\n");
 }
 
-export function runProbe3() {
-  const out = [];
+export function runProbe3(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 3/4] Incompatible Field Type: Corrupt Payload");
   out.push("================================================================================");
@@ -94,8 +95,8 @@ export function runProbe3() {
   return out.join("\n");
 }
 
-export function runProbe4() {
-  const out = [];
+export function runProbe4(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 4/4] API Drift: Renamed Backend Field");
   out.push("================================================================================");
@@ -106,11 +107,11 @@ export function runProbe4() {
   return out.join("\n");
 }
 
-export function runBoundaryTour() {
+export function runBoundaryTour(): string {
   return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4()].join("\n");
 }
 
-export function probeBoundaryDoors(rawInput, schema = userSchema) {
+export function probeBoundaryDoors(rawInput: unknown, schema: Schema<any> = userSchema): string {
   const lines = [
     `Contract Schema: ${describe(schema)}`,
     `Raw Input:       ${typeof rawInput === "string" ? rawInput : formatJson(rawInput)}`,
@@ -126,7 +127,7 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
     return lines.join("\n");
   }
 
-  const payload = parsedJson.value;
+  const payload = parsedJson.value as any;
 
   lines.push(`\n--------------------------------------------------------------------------------`);
   lines.push(`[DOOR A] The Cast: (payload as User)`);
@@ -149,7 +150,7 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
       `  Downstream Code:  user.email.toLowerCase() -> "${payload.email.toLowerCase()}"`,
       `  Execution Status: SUCCESS (payload happened to meet expectations)`,
     );
-  } catch (err) {
+  } catch (err: any) {
     lines.push(
       `  Downstream Code:  user.email.toLowerCase()`,
       `  RUNTIME CRASH:    ${err.name}: ${err.message}`,
@@ -182,7 +183,7 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
   return lines.join("\n");
 }
 
-function parseJsonOrRaw(input) {
+function parseJsonOrRaw(input: string): any {
   try {
     return JSON.parse(input);
   } catch {
@@ -190,13 +191,13 @@ function parseJsonOrRaw(input) {
   }
 }
 
-async function waitForEnter(rl, promptText) {
-  return new Promise((resolve) => {
-    rl.question(promptText, () => resolve());
-  });
+function waitForEnter(rl: readline.Interface, promptText: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  rl.question(promptText, () => resolve());
+  return promise;
 }
 
-export async function runSteppedSession() {
+export async function runSteppedSession(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -214,18 +215,18 @@ export async function runSteppedSession() {
   await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: API Schema Drift Detection] ");
 
   console.log("\n" + runProbe4());
-  console.log("\nAll 4 trust boundary probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  console.log("\nAll 4 trust boundary probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
-export async function startRepl() {
+export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "lab-boundary> ",
   });
 
-  console.log("\nTypeScript Trust Boundary Interactive Lab");
+  console.log("\nTypeScript Trust Boundary Interactive Lab (running with Deno)");
   console.log("Type 'probe 1', 'probe 2', 'probe 3', or 'probe 4'.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

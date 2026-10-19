@@ -5,13 +5,18 @@
  * instead of by a production crash.
  */
 
-import { userSchema } from "./schema.mjs";
+import { userSchema } from "./schema.ts";
 
-export function contractFields() {
+export function contractFields(): string[] {
   return Object.keys(userSchema.shape);
 }
 
-export function drift(clientFields) {
+export interface DriftResult {
+  inSync: boolean;
+  missing: string[];
+}
+
+export function drift(clientFields: string[]): DriftResult {
   const contract = contractFields();
   const missing = clientFields.filter((field) => !contract.includes(field));
   return { inSync: missing.length === 0, missing };

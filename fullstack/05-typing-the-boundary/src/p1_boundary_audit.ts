@@ -5,7 +5,11 @@
  * resolves to the response, and `json()` resolves to the body.
  */
 
-export async function fetchProfile(client, id) {
+export interface HttpClient {
+  get(path: string): Promise<{ ok: boolean; json(): Promise<unknown> }>;
+}
+
+export async function fetchProfile(client: HttpClient, id: string): Promise<unknown> {
   const response = await client.get(`/api/users/${id}`);
   const data = await response.json();
   return data;

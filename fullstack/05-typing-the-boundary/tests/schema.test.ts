@@ -11,7 +11,7 @@ import {
   string,
   transform,
   userSchema,
-} from "../src/schema.mjs";
+} from "../src/schema.ts";
 
 const RAW = { id: "u1", name: "ada", email: "ada@example.com", role: "admin" };
 
@@ -33,7 +33,9 @@ test("a wrong enum member fails at the member's path", () => {
 test("safeParse reports the failure instead of throwing", () => {
   const result = safeParse(userSchema, { ...RAW, role: "owner" });
   assert.strictEqual(result.success, false);
-  assert.deepStrictEqual(result.error.path, ["role"]);
+  if (!result.success) {
+    assert.deepStrictEqual(result.error.path, ["role"]);
+  }
 });
 
 test("safeParse succeeds with the parsed data", () => {

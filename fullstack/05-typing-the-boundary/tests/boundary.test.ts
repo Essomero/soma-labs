@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, readJson } from "../src/boundary.mjs";
-import { number, object, userSchema } from "../src/schema.mjs";
+import { decode, readJson } from "../src/boundary.ts";
+import { number, object, userSchema } from "../src/schema.ts";
 
 const RAW = { id: "u1", name: "ada", email: "ada@example.com", role: "member" };
 
@@ -23,6 +23,6 @@ test("decode parses untrusted input into the shape the schema guarantees", () =>
 test("decode reports the failing path without throwing", () => {
   const result = decode(object({ count: number() }), { count: "two" });
   assert.strictEqual(result.ok, false);
-  assert.deepStrictEqual(result.path, ["count"]);
-  assert.match(result.message, /count: expected number/);
+  assert.deepStrictEqual((result as any).path, ["count"]);
+  assert.match((result as any).message, /count: expected number/);
 });

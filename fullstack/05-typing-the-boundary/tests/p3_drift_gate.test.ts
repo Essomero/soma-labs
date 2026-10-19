@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contractFields, drift } from "../src/p3_drift_gate.mjs";
+import { contractFields, drift } from "../src/p3_drift_gate.ts";
 
 test("Problem 3: the contract exposes every field the schema declares", () => {
   assert.deepStrictEqual(contractFields(), ["id", "name", "email", "role"]);

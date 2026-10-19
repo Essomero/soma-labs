@@ -7,7 +7,7 @@ import {
   runProbe3,
   runProbe4,
   runBoundaryTour,
-} from "../lab.mjs";
+} from "../lab.ts";
 
 test("runProbe1 details valid untrusted payload", () => {
   const result = runProbe1();

@@ -4,19 +4,25 @@
  * check, because the type system cannot see what is behind the door.
  */
 
-import { ParseError, parse } from "./schema.mjs";
+import { ParseError, parse, type Schema } from "./schema.ts";
 
-/** `JSON.parse` hands back `unknown`; a malformed text is data, not an exception to leak. */
-export function readJson(text) {
+export type ReadJsonResult =
+  | { ok: true; value: unknown }
+  | { ok: false; message: string };
+
+export function readJson(text: string): ReadJsonResult {
   try {
     return { ok: true, value: JSON.parse(text) };
-  } catch (error) {
+  } catch (error: any) {
     return { ok: false, message: error.message };
   }
 }
 
-/** Parse-don't-validate: a schema in, a guaranteed value or a named failure out. */
-export function decode(schema, input) {
+export type DecodeResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string; path: (string | number)[] };
+
+export function decode<T>(schema: Schema<T>, input: unknown): DecodeResult<T> {
   try {
     return { ok: true, data: parse(schema, input) };
   } catch (error) {

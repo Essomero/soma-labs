@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchProfile } from "../src/p1_boundary_audit.mjs";
+import { fetchProfile } from "../src/p1_boundary_audit.ts";
 
 const VALID = { id: "u1", name: "ada", email: "ada@example.com", role: "admin" };
 
-const clientReturning = (status, body) => ({
+const clientReturning = (status: number, body: unknown) => ({
   get: async () => ({
     ok: status >= 200 && status < 300,
     status,

@@ -6,13 +6,18 @@
 
 const TOP_TYPES = new Set(["any", "unknown"]);
 
-export function checkAssignable(from, to) {
+export interface AssignableCheck {
+  assignable: boolean;
+  reason: string | null;
+}
+
+export function checkAssignable(from: string, to: string): AssignableCheck {
   if (TOP_TYPES.has(from)) return { assignable: true, reason: null };
   if (from === to) return { assignable: true, reason: null };
   return { assignable: false, reason: `${from} is not assignable to ${to}` };
 }
 
-export const TABLE = [
+export const TABLE: { from: string; to: string }[] = [
   { from: "any", to: "any" },
   { from: "any", to: "unknown" },
   { from: "unknown", to: "any" },

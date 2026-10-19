@@ -4,11 +4,12 @@
  * One schema describes a shape twice: as the runtime check and as the type the
  * check guarantees. `parse` is the only door from untrusted data to trusted
  * data, `safeParse` is the non-throwing variant, and `describe` prints the type
- * the schema stands for — the runtime shadow of `z.infer<typeof schema>`.
+ * the schema stands for: the runtime shadow of `z.infer<typeof schema>`.
  */
 
 export class ParseError extends Error {
-  constructor(path, message) {
+  path: (string | number)[];
+  constructor(path: (string | number)[], message: string) {
     const where = path.length > 0 ? path.join(".") : "(root)";
     super(`${where}: ${message}`);
     this.name = "ParseError";
@@ -16,14 +17,20 @@ export class ParseError extends Error {
   }
 }
 
-function fail(path, message) {
+function fail(path: (string | number)[], message: string): never {
   throw new ParseError(path, message);
 }
 
-const isPlainObject = (value) =>
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-export const string = () => ({
+export interface Schema<T> {
+  kind: string;
+  parse(value: unknown, path?: (string | number)[]): T;
+  [key: string]: unknown;
+}
+
+export const string = (): Schema<string> => ({
   kind: "string",
   parse(value, path = []) {
     if (typeof value !== "string") fail(path, "expected string");
@@ -31,7 +38,7 @@ export const string = () => ({
   },
 });
 
-export const number = () => ({
+export const number = (): Schema<number> => ({
   kind: "number",
   parse(value, path = []) {
     if (typeof value !== "number" || Number.isNaN(value)) fail(path, "expected number");
@@ -39,7 +46,7 @@ export const number = () => ({
   },
 });
 
-export const boolean = () => ({
+export const boolean = (): Schema<boolean> => ({
   kind: "boolean",
   parse(value, path = []) {
     if (typeof value !== "boolean") fail(path, "expected boolean");
@@ -47,25 +54,27 @@ export const boolean = () => ({
   },
 });
 
-export const literal = (expected) => ({
+export const literal = <T extends string | number | boolean>(expected: T): Schema<T> => ({
   kind: "literal",
   expected,
   parse(value, path = []) {
     if (value !== expected) fail(path, `expected ${JSON.stringify(expected)}`);
-    return value;
+    return value as T;
   },
 });
 
-export const enumeration = (allowed) => ({
+export const enumeration = <T extends string>(allowed: T[]): Schema<T> & { allowed: T[] } => ({
   kind: "enum",
   allowed,
   parse(value, path = []) {
-    if (!allowed.includes(value)) fail(path, `expected one of ${allowed.join(", ")}`);
-    return value;
+    if (typeof value !== "string" || !allowed.includes(value as T)) {
+      fail(path, `expected one of ${allowed.join(", ")}`);
+    }
+    return value as T;
   },
 });
 
-export const array = (item) => ({
+export const array = <T>(item: Schema<T>): Schema<T[]> & { item: Schema<T> } => ({
   kind: "array",
   item,
   parse(value, path = []) {
@@ -74,21 +83,22 @@ export const array = (item) => ({
   },
 });
 
-/** Every declared member is required; members the shape does not declare are dropped. */
-export const object = (shape) => ({
+export const object = <S extends Record<string, Schema<unknown>>>(
+  shape: S,
+): Schema<{ [K in keyof S]: S[K] extends Schema<infer U> ? U : never }> & { shape: S } => ({
   kind: "object",
   shape,
   parse(value, path = []) {
     if (!isPlainObject(value)) fail(path, "expected object");
-    const parsed = {};
+    const parsed: Record<string, unknown> = {};
     for (const [key, field] of Object.entries(shape)) {
       parsed[key] = field.parse(value[key], [...path, key]);
     }
-    return parsed;
+    return parsed as any;
   },
 });
 
-export const optional = (inner) => ({
+export const optional = <T>(inner: Schema<T>): Schema<T | undefined> & { inner: Schema<T> } => ({
   kind: "optional",
   inner,
   parse(value, path = []) {
@@ -96,22 +106,28 @@ export const optional = (inner) => ({
   },
 });
 
-/** `z.string().transform(...)` — the boundary parse also shapes the value. */
-export const transform = (inner, coerce, to) => ({
+export const transform = <A, B>(
+  inner: Schema<A>,
+  coerce: (val: A) => B,
+  to: string,
+): Schema<B> & { inner: Schema<A>; to: string } => ({
   kind: "transform",
   inner,
-  coerce,
   to,
   parse(value, path = []) {
     return coerce(inner.parse(value, path));
   },
 });
 
-export function parse(schema, value) {
+export function parse<T>(schema: Schema<T>, value: unknown): T {
   return schema.parse(value, []);
 }
 
-export function safeParse(schema, value) {
+export type SafeParseResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: { message: string; path: (string | number)[] } };
+
+export function safeParse<T>(schema: Schema<T>, value: unknown): SafeParseResult<T> {
   try {
     return { success: true, data: parse(schema, value) };
   } catch (error) {
@@ -122,8 +138,7 @@ export function safeParse(schema, value) {
   }
 }
 
-/** `z.infer<typeof schema>` — the type derived from the schema, never hand-written. */
-export function describe(schema) {
+export function describe(schema: any): string {
   switch (schema.kind) {
     case "string":
       return "string";
@@ -134,7 +149,7 @@ export function describe(schema) {
     case "literal":
       return JSON.stringify(schema.expected);
     case "enum":
-      return schema.allowed.map((value) => JSON.stringify(value)).join(" | ");
+      return schema.allowed.map((value: string) => JSON.stringify(value)).join(" | ");
     case "array":
       return `${describe(schema.item)}[]`;
     case "optional":
@@ -152,7 +167,6 @@ export function describe(schema) {
   }
 }
 
-/** The lesson's running example: the shared contract for a user. */
 export const userSchema = object({
   id: string(),
   name: string(),

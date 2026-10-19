@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assignabilityTable, checkAssignable } from "../src/p2_assignability.mjs";
+import { assignabilityTable, checkAssignable } from "../src/p2_assignability.ts";
 
 test("Problem 2: any flows out into any type", () => {
   assert.deepStrictEqual(checkAssignable("any", "string"), { assignable: true, reason: null });
@@ -24,7 +24,7 @@ test("Problem 2: unknown yields nothing without proof", () => {
     false,
     `Expected unknown -> string to be unassignable, but the table reports it as assignable.`,
   );
-  assert.match(cell.reason, /narrow/);
+  assert.match(cell.reason as string, /narrow/);
 });
 
 test("Problem 2: the only failing cell is unknown to a narrower type", () => {
