@@ -10,9 +10,14 @@ In this lab, you probe:
 
 **How to drive it:**
 ```bash
-npm run lab           # interactive REPL (test payloads through Door A and Door B)
-npm run tour          # guided tour across valid, missing, corrupt, and drifted payloads
-npm run lab:boundary  # probe the trust boundary comparison specifically
+npm run lab           # interactive REPL (test custom payloads)
+npm run lab:step      # interactive stepped session (pauses between probes)
+npm run lab:probe-1   # Probe 1: Valid untrusted payload through Door A vs Door B
+npm run lab:probe-2   # Probe 2: Missing required field (type cast crash vs schema catch)
+npm run lab:probe-3   # Probe 3: Incompatible field type
+npm run lab:probe-4   # Probe 4: API schema drift detection
+npm run lab:boundary # run all trust boundary probes (1-4)
+npm run tour         # full guided tour
 ```
 
 ## Quick Start

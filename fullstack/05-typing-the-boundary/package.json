@@ -6,6 +6,11 @@
   "scripts": {
     "lab": "node lab.mjs",
     "tour": "node lab.mjs --tour",
+    "lab:step": "node lab.mjs --step",
+    "lab:probe-1": "node lab.mjs probe 1",
+    "lab:probe-2": "node lab.mjs probe 2",
+    "lab:probe-3": "node lab.mjs probe 3",
+    "lab:probe-4": "node lab.mjs probe 4",
     "lab:boundary": "node lab.mjs --topic=boundary",
     "test": "node --test tests/*.test.mjs",
     "test:lesson": "node --test tests/schema.test.mjs tests/boundary.test.mjs",

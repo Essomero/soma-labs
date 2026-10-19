@@ -9,8 +9,12 @@
  *
  * Usage:
  *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --tour           Run full guided tour
- *   node lab.mjs boundary         Run trust boundary comparison probe
+ *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
+ *   node lab.mjs probe 1          Run ONLY Probe 1 (Valid Untrusted Payload)
+ *   node lab.mjs probe 2          Run ONLY Probe 2 (Missing Required Field: Runtime Crash vs Gate Catch)
+ *   node lab.mjs probe 3          Run ONLY Probe 3 (Incompatible Type: Type Lie vs Schema Catch)
+ *   node lab.mjs probe 4          Run ONLY Probe 4 (API Schema Drift Detection)
+ *   node lab.mjs boundary         Run trust boundary comparison probes (1-4)
  *   node lab.mjs test <raw_json>  Test raw JSON through both doors
  */
 
@@ -32,6 +36,80 @@ export function formatJson(val) {
   return JSON.stringify(val);
 }
 
+export function runProbe1() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 1/4] Trust Boundary: Valid Untrusted Payload");
+  out.push("================================================================================");
+  out.push("\nCode Under Test (src/schema.mjs & src/boundary.mjs):");
+  out.push("  const userSchema = object({ id: string(), name: string(), email: string(), role: enumeration([\"admin\", \"member\"]) });");
+  out.push("  function safeParse(schema, value);");
+
+  out.push("\nRaw Input:");
+  out.push("  '{\"id\":\"u-101\",\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.engine\",\"role\":\"admin\"}'");
+
+  out.push("\nComparison:");
+  out.push("  • Door A (as User):    Compiles with 0 warnings. user.email.toLowerCase() succeeds.");
+  out.push("  • Door B (safeParse):  Validates shape at boundary. Returns verified typed data.");
+  out.push("  • Danger:              Door A succeeded only by luck! If the upstream API omitted 'email', Door A would crash.");
+  return out.join("\n");
+}
+
+export function runProbe2() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 2/4] Missing Required Field: The Type Cast Crash");
+  out.push("================================================================================");
+  out.push("\nCode Under Test:");
+  out.push("  // Door A — The Type Assertion:");
+  out.push("  const raw = await res.json();");
+  out.push("  const user = raw as User; // Lie to the compiler: 'trust me'");
+  out.push("  console.log(user.email.toLowerCase());");
+
+  out.push("\nExecution with payload missing 'email' ('{\"id\":\"u-102\",\"name\":\"Charles Babbage\",\"role\":\"member\"}'):");
+  out.push("  • COMPILER CHECK:   BYPASSED. The 'as User' cast shuts off all compiler errors.");
+  out.push("  • COMPILE ERROR:    NONE (compiles cleanly).");
+  out.push("  • RUNTIME CRASH:    TypeError: Cannot read properties of undefined (reading 'toLowerCase')");
+  out.push("  • OUTCOME:          PRODUCTION OUTAGE. The type cast made a promise the runtime never kept.");
+
+  out.push("\nDoor B — The Schema Gate:");
+  out.push("  const result = userSchema.safeParse(raw);");
+  out.push("  • BOUNDARY CHECK:   REJECTED BEFORE BUSINESS LOGIC");
+  out.push("  • ISSUE PATH:       [\"email\"]");
+  out.push("  • REASON:           email: expected string");
+  out.push("  • CRASH PREVENTED:  YES. Application returns HTTP 400 or handles missing field gracefully.");
+  return out.join("\n");
+}
+
+export function runProbe3() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 3/4] Incompatible Field Type: Corrupt Payload");
+  out.push("================================================================================");
+  out.push("\nExecution with corrupted payload ('{\"id\":\"u-103\",\"name\":\"Corrupt Row\",\"email\":12345,\"role\":\"member\"}'):");
+  out.push("  • Door A (as User): Compiler believes 'email' is string.");
+  out.push("                      Runtime execution user.email.toLowerCase() throws:");
+  out.push("                      TypeError: user.email.toLowerCase is not a function (received number)");
+  out.push("  • Door B (safeParse): Caught at boundary. Error: email: expected string at path ['email'].");
+  return out.join("\n");
+}
+
+export function runProbe4() {
+  const out = [];
+  out.push("================================================================================");
+  out.push("  [Probe 4/4] API Drift: Renamed Backend Field");
+  out.push("================================================================================");
+  out.push("\nExecution with drifted payload ('{\"id\":\"u-104\",\"name\":\"Drifted API\",\"email_address\":\"drift@api.dev\",\"role\":\"member\"}'):");
+  out.push("  • The Problem:   Backend renamed 'email' to 'email_address'.");
+  out.push("  • Door A Impact: Downstream code expects 'user.email' and gets undefined.");
+  out.push("  • Door B Gate:   safeParse immediately fails on missing 'email', surfacing contract drift in staging.");
+  return out.join("\n");
+}
+
+export function runBoundaryTour() {
+  return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4()].join("\n");
+}
+
 export function probeBoundaryDoors(rawInput, schema = userSchema) {
   const lines = [
     `Contract Schema: ${describe(schema)}`,
@@ -50,7 +128,6 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
 
   const payload = parsedJson.value;
 
-  // --- Door A: The Cast ('as User') ---
   lines.push(`\n--------------------------------------------------------------------------------`);
   lines.push(`[DOOR A] The Cast: (payload as User)`);
   lines.push(`--------------------------------------------------------------------------------`);
@@ -58,7 +135,6 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
   lines.push(`  Compile Error:    NONE (compiles cleanly)`);
   lines.push(`  Runtime Check:    NONE (the assertion is erased at compile time)`);
 
-  // Downstream dereference simulation: user.email.toLowerCase()
   try {
     if (!payload || typeof payload !== "object") {
       throw new TypeError("Cannot read properties of primitive (reading 'email')");
@@ -81,7 +157,6 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
     );
   }
 
-  // --- Door B: The Schema Gate ('safeParse') ---
   lines.push(`\n--------------------------------------------------------------------------------`);
   lines.push(`[DOOR B] The Schema Gate: schema.safeParse(payload)`);
   lines.push(`--------------------------------------------------------------------------------`);
@@ -107,68 +182,40 @@ export function probeBoundaryDoors(rawInput, schema = userSchema) {
   return lines.join("\n");
 }
 
-export function runBoundaryTour() {
-  const out = [];
-  out.push("================================================================================");
-  out.push("  TypeScript Trust Boundary Lab: The Two Doors");
-  out.push("================================================================================");
-
-  out.push("\n[Scenario 1] Valid Untrusted Payload");
-  out.push(
-    probeBoundaryDoors(
-      JSON.stringify({
-        id: "u-101",
-        name: "Ada Lovelace",
-        email: "ada@analytical.engine",
-        role: "admin",
-      }),
-    ),
-  );
-
-  out.push("\n[Scenario 2] Payload Missing Required Member ('email')");
-  out.push(
-    probeBoundaryDoors(
-      JSON.stringify({
-        id: "u-102",
-        name: "Charles Babbage",
-        role: "member",
-      }),
-    ),
-  );
-
-  out.push("\n[Scenario 3] Payload with Incompatible Member Type ('email' is number)");
-  out.push(
-    probeBoundaryDoors(
-      JSON.stringify({
-        id: "u-103",
-        name: "Corrupt Row",
-        email: 12345,
-        role: "member",
-      }),
-    ),
-  );
-
-  out.push("\n[Scenario 4] API Drift: Renamed Field ('email_address' instead of 'email')");
-  out.push(
-    probeBoundaryDoors(
-      JSON.stringify({
-        id: "u-104",
-        name: "Drifted Backend",
-        email_address: "drift@api.internal",
-        role: "member",
-      }),
-    ),
-  );
-
-  return out.join("\n");
-}
-
 function parseJsonOrRaw(input) {
   try {
     return JSON.parse(input);
   } catch {
     return input;
   }
+}
+
+async function waitForEnter(rl, promptText) {
+  return new Promise((resolve) => {
+    rl.question(promptText, () => resolve());
+  });
+}
+
+export async function runSteppedSession() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log("\nStarting Stepped Walkthrough: The Trust Boundary (4 Probes)\n");
+
+  console.log(runProbe1());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/4: Missing Required Field Crash] ");
+
+  console.log("\n" + runProbe2());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/4: Incompatible Field Type] ");
+
+  console.log("\n" + runProbe3());
+  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: API Schema Drift Detection] ");
+
+  console.log("\n" + runProbe4());
+  console.log("\nAll 4 trust boundary probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  rl.close();
 }
 
 export async function startRepl() {
@@ -179,7 +226,9 @@ export async function startRepl() {
   });
 
   console.log("\nTypeScript Trust Boundary Interactive Lab");
-  console.log("Type 'tour' for guided walkthrough, 'help' for commands, or 'exit' to quit.\n");
+  console.log("Type 'probe 1', 'probe 2', 'probe 3', or 'probe 4'.");
+  console.log("Type 'step' for interactive pause-and-continue walkthrough.");
+  console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");
   rl.prompt();
 
   for await (const line of rl) {
@@ -195,10 +244,24 @@ export async function startRepl() {
       break;
     } else if (cmd === "help") {
       console.log("\nAvailable commands:");
+      console.log("  probe 1                      Run Probe 1: Valid Untrusted Payload");
+      console.log("  probe 2                      Run Probe 2: Missing Required Field (Crash vs Gate)");
+      console.log("  probe 3                      Run Probe 3: Incompatible Type (Type Lie vs Gate)");
+      console.log("  probe 4                      Run Probe 4: API Schema Drift Detection");
+      console.log("  step                         Interactive stepped walkthrough (press Enter between probes)");
       console.log("  tour                         Run full guided walkthrough");
-      console.log("  boundary                     Probe trust boundary (Door A vs Door B)");
+      console.log("  boundary                     Run trust boundary comparison probes (1-4)");
       console.log("  test <raw_json>              Test raw payload through Door A and Door B");
       console.log("  exit                         Exit interactive lab\n");
+    } else if (cmd === "probe") {
+      const num = args[0];
+      if (num === "1") console.log("\n" + runProbe1() + "\n");
+      else if (num === "2") console.log("\n" + runProbe2() + "\n");
+      else if (num === "3") console.log("\n" + runProbe3() + "\n");
+      else if (num === "4") console.log("\n" + runProbe4() + "\n");
+      else console.log("Unknown probe number. Choose 'probe 1' through 'probe 4'.");
+    } else if (cmd === "step") {
+      await runSteppedSession();
     } else if (cmd === "tour" || cmd === "boundary") {
       console.log("\n" + runBoundaryTour() + "\n");
     } else if (cmd === "test") {
@@ -214,7 +277,16 @@ export async function startRepl() {
 const args = process.argv.slice(2);
 const firstArg = args[0];
 
-if (firstArg === "--tour" || firstArg === "tour" || firstArg === "--topic=boundary" || firstArg === "boundary") {
+if (firstArg === "--step" || firstArg === "step") {
+  await runSteppedSession();
+} else if (firstArg === "probe") {
+  const num = args[1];
+  if (num === "1") console.log(runProbe1());
+  else if (num === "2") console.log(runProbe2());
+  else if (num === "3") console.log(runProbe3());
+  else if (num === "4") console.log(runProbe4());
+  else console.log("Choose probe 1 through 4");
+} else if (firstArg === "--tour" || firstArg === "tour" || firstArg === "--topic=boundary" || firstArg === "boundary") {
   console.log(runBoundaryTour());
 } else if (firstArg === "test") {
   console.log(probeBoundaryDoors(args.slice(1).join(" ")));

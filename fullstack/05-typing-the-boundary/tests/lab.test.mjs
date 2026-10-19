@@ -1,26 +1,45 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { probeBoundaryDoors, runBoundaryTour } from "../lab.mjs";
+import {
+  probeBoundaryDoors,
+  runProbe1,
+  runProbe2,
+  runProbe3,
+  runProbe4,
+  runBoundaryTour,
+} from "../lab.mjs";
 
-test("probeBoundaryDoors handles valid payload", () => {
-  const result = probeBoundaryDoors({
-    id: "u1",
-    name: "Ada",
-    email: "ada@test.com",
-    role: "admin",
-  });
-  assert.match(result, /Schema Gate:\s+PASSED/);
-  assert.match(result, /Execution Status: SUCCESS/);
+test("runProbe1 details valid untrusted payload", () => {
+  const result = runProbe1();
+  assert.match(result, /Door A \(as User\)/);
+  assert.match(result, /Door B \(safeParse\)/);
 });
 
-test("probeBoundaryDoors catches crash in Door A and catches schema rejection in Door B", () => {
-  const result = probeBoundaryDoors({ id: "u1", name: "Ada", role: "admin" });
+test("runProbe2 details missing field crash vs schema catch", () => {
+  const result = runProbe2();
   assert.match(result, /RUNTIME CRASH/);
-  assert.match(result, /Schema Gate:\s+REJECTED AT THE BOUNDARY/);
-  assert.match(result, /Crash Prevented:\s+YES/);
+  assert.match(result, /BOUNDARY CHECK:\s+REJECTED/);
+  assert.match(result, /CRASH PREVENTED:\s+YES/);
+});
+
+test("runProbe3 details corrupted field handling", () => {
+  const result = runProbe3();
+  assert.match(result, /TypeError: user\.email\.toLowerCase is not a function/);
+  assert.match(result, /Door B \(safeParse\): Caught at boundary/);
+});
+
+test("runProbe4 details API drift detection", () => {
+  const result = runProbe4();
+  assert.match(result, /Backend renamed 'email' to 'email_address'/);
+  assert.match(result, /safeParse immediately fails on missing 'email'/);
+});
+
+test("probeBoundaryDoors handles programmatic calls", () => {
+  const res = probeBoundaryDoors({ id: "1", name: "Ada", email: "ada@x.com", role: "admin" });
+  assert.match(res, /Schema Gate:\s+PASSED/);
 });
 
 test("guided tour runs cleanly", () => {
   const tour = runBoundaryTour();
-  assert.ok(tour.length > 200);
+  assert.ok(tour.length > 300);
 });
