@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { describe } from "../src/p2_trap_hunt.mjs";
+import { describe } from "../src/p2_trap_hunt.ts";
 
-function outcome(fn) {
+function outcome(fn: () => unknown): string {
   try {
     return `returned ${JSON.stringify(fn())}`;
-  } catch (error) {
+  } catch (error: any) {
     return `threw ${error.message}`;
   }
 }
@@ -33,7 +33,7 @@ test("Problem 2: an image without alt omits the suffix instead of printing undef
 });
 
 test("Problem 2: a document type outside the union is unreachable, not echoed back", () => {
-  const video = { type: "video", src: "v.mp4" };
+  const video = { type: "video", src: "v.mp4" } as any;
   assert.throws(
     () => describe(video),
     /unhandled case/,

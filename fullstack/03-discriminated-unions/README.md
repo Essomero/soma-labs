@@ -23,26 +23,28 @@ npm run tour             # full guided tour
 ```
 ## Quick Start
 
-### Option A — Docker Compose (recommended)
+### Option A: Deno (Recommended: Native TypeScript runner, zero dependencies)
 
-The compose file mounts this directory into the container, so edits in `src/` are picked up instantly.
+This workspace uses native TypeScript (.ts) files driven directly by Deno. There are no build steps, no tsconfig, and no node_modules required:
+
+```bash
+# If Deno is not yet installed:
+# brew install deno (macOS) or curl -fsSL https://deno.land/install.sh | sh
+
+npm run lab          # or: deno task lab
+npm run tour         # or: deno task tour
+npm run test:lesson  # regression guard for lesson concepts
+npm run test:p1      # problem 1 (fails until fixed)
+npm run test:p2
+npm run test:p3
+```
+
+### Option B: Docker Compose
 
 ```bash
 docker compose run --rm test            # all tests
 docker compose run --rm test npm run test:lesson
 docker compose run --rm test npm run test:p1
-```
-
-### Option B — Native Node (Node 20+, no dependencies)
-
-This workspace uses Node's built-in test runner. There is no `node_modules` to install:
-
-```bash
-npm run tour         # see the guided tour
-npm run test:lesson  # regression guard for the lesson concepts
-npm run test:p1      # problem 1 (fails until fixed)
-npm run test:p2
-npm run test:p3
 ```
 
 ## Tear Down & Cleanup
@@ -56,17 +58,16 @@ docker image prune -f
 
 **Demo (read, then run):**
 
-* `src/dispatcher.mjs` — the `Shape` union with a literal `kind`, the narrowing
-  dispatcher `area`, and `assertNever` — the exhaustiveness branch that must be
-  unreachable.
-* `src/async_state.mjs` — async state as four mutually exclusive members
-  (idle/loading/success/error) and the exhaustive `view` renderer.
+* `src/dispatcher.ts`: the `Shape` union with a literal `kind`, the narrowing
+  dispatcher `area`, and `assertNever` (the exhaustiveness branch that must be unreachable).
+* `src/async_state.ts`: async state as four mutually exclusive members
+  (idle, loading, success, error) and the exhaustive `view` renderer.
 
 **Practice problems (fix `src/`, make the test pass):**
 
-1. `src/p1_api_response.mjs` — the payment response union and why an uncovered
+1. `src/p1_api_response.ts`: the payment response union and why an uncovered
    status must not fall through to "failed".
-2. `src/p2_trap_hunt.mjs` — two narrowing failures: the destructure before the
+2. `src/p2_trap_hunt.ts`: two narrowing failures: the destructure before the
    check, and the optional `alt`.
-3. `src/p3_event_log.mjs` — the extensible event log; a new event type must throw
+3. `src/p3_event_log.ts`: the extensible event log; a new event type must throw
    from the exhaustive branch, not format an empty line.

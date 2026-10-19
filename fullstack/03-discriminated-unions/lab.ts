@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run -A
 /**
  * TypeScript Discriminated Unions Lab — Interactive Narrowing Simulator
  *
@@ -6,34 +6,34 @@
  * narrowing, the assertNever exhaustiveness guarantee, and the destructuring trap.
  *
  * Usage:
- *   node lab.mjs                  Interactive REPL session (or tour in non-interactive shell)
- *   node lab.mjs --step           Interactive step-by-step walkthrough (pauses between probes)
- *   node lab.mjs probe 1          Run ONLY Probe 1 (Circle Variant Dispatch)
- *   node lab.mjs probe 2          Run ONLY Probe 2 (Square Variant Dispatch)
- *   node lab.mjs probe 3          Run ONLY Probe 3 (Rectangle Variant Dispatch)
- *   node lab.mjs probe 4          Run ONLY Probe 4 (Unhandled Variant & assertNever Exhaustiveness)
- *   node lab.mjs probe 5          Run ONLY Probe 5 (Async State Union Exclusivity)
- *   node lab.mjs probe 6          Run ONLY Probe 6 (The Destructuring Trap Simulation)
- *   node lab.mjs dispatcher       Run shape dispatcher & exhaustiveness probes (1-4)
- *   node lab.mjs async-state      Run async-state & destructuring trap probes (5-6)
- *   node lab.mjs shape <json>     Probe custom shape object
- *   node lab.mjs state <json>     Probe custom async-state object
+ *   deno run -A lab.ts            Interactive REPL session (or tour in non-interactive shell)
+ *   deno run -A lab.ts --step     Interactive step-by-step walkthrough (pauses between probes)
+ *   deno run -A lab.ts probe 1    Run ONLY Probe 1 (Circle Variant Dispatch)
+ *   deno run -A lab.ts probe 2    Run ONLY Probe 2 (Square Variant Dispatch)
+ *   deno run -A lab.ts probe 3    Run ONLY Probe 3 (Rectangle Variant Dispatch)
+ *   deno run -A lab.ts probe 4    Run ONLY Probe 4 (Unhandled Variant & assertNever Exhaustiveness)
+ *   deno run -A lab.ts probe 5    Run ONLY Probe 5 (Async State Union Exclusivity)
+ *   deno run -A lab.ts probe 6    Run ONLY Probe 6 (The Destructuring Trap Simulation)
+ *   deno run -A lab.ts dispatcher Run shape dispatcher & exhaustiveness probes (1-4)
+ *   deno run -A lab.ts async-state Run async-state & destructuring trap probes (5-6)
+ *   deno run -A lab.ts shape <json> Probe custom shape object
+ *   deno run -A lab.ts state <json> Probe custom async-state object
  */
 
 import readline from "node:readline";
-import { area, assertNever } from "./src/dispatcher.mjs";
-import { idle, loading, success, failure, view } from "./src/async_state.mjs";
+import { area, assertNever, type Shape } from "./src/dispatcher.ts";
+import { idle, loading, success, failure, view, type AsyncState } from "./src/async_state.ts";
 
-export function formatJson(val) {
+export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
-export function runProbe1() {
-  const out = [];
+export function runProbe1(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 1/4] Narrowing: Circle Variant Dispatch");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/dispatcher.mjs):");
+  out.push("\nCode Under Test (src/dispatcher.ts):");
   out.push("  type Shape = Circle | Square | Rect;");
   out.push("  function area(shape: Shape): number");
 
@@ -50,12 +50,12 @@ export function runProbe1() {
   return out.join("\n");
 }
 
-export function runProbe2() {
-  const out = [];
+export function runProbe2(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 2/4] Narrowing: Square Variant Dispatch");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/dispatcher.mjs):");
+  out.push("\nCode Under Test (src/dispatcher.ts):");
   out.push("  const shape = { kind: \"square\", side: 4 };");
   out.push("  const result = area(shape);");
 
@@ -68,12 +68,12 @@ export function runProbe2() {
   return out.join("\n");
 }
 
-export function runProbe3() {
-  const out = [];
+export function runProbe3(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 3/4] Narrowing: Rectangle Variant Dispatch");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/dispatcher.mjs):");
+  out.push("\nCode Under Test (src/dispatcher.ts):");
   out.push("  const shape = { kind: \"rect\", width: 6, height: 3 };");
   out.push("  const result = area(shape);");
 
@@ -86,12 +86,12 @@ export function runProbe3() {
   return out.join("\n");
 }
 
-export function runProbe4() {
-  const out = [];
+export function runProbe4(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 4/4] Exhaustiveness: Catching Unhandled Variants with assertNever");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/dispatcher.mjs):");
+  out.push("\nCode Under Test (src/dispatcher.ts):");
   out.push("  function assertNever(value: never): never {");
   out.push("    throw new Error(`unhandled case: ${JSON.stringify(value)}`);");
   out.push("  }");
@@ -99,7 +99,7 @@ export function runProbe4() {
 
   out.push("\nExecution at Call Site:");
   out.push("  const triangle = { kind: \"triangle\", base: 10, height: 5 };");
-  out.push("  area(triangle);");
+  out.push("  area(triangle as any);");
 
   out.push("\nBehind the Scenes in the TypeScript Compiler:");
   out.push("  1. DISCRIMINANT EVALUATION: 'triangle' matches neither 'circle', 'square', nor 'rect'.");
@@ -111,12 +111,12 @@ export function runProbe4() {
   return out.join("\n");
 }
 
-export function runProbe5() {
-  const out = [];
+export function runProbe5(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 5/6] Async State Union: Mutual Exclusivity");
   out.push("================================================================================");
-  out.push("\nCode Under Test (src/async_state.mjs):");
+  out.push("\nCode Under Test (src/async_state.ts):");
   out.push("  type AsyncState<T> = Idle | Loading | Success<T> | Error;");
   out.push("  function view(state: AsyncState<T>)");
 
@@ -132,8 +132,8 @@ export function runProbe5() {
   return out.join("\n");
 }
 
-export function runProbe6() {
-  const out = [];
+export function runProbe6(): string {
+  const out: string[] = [];
   out.push("================================================================================");
   out.push("  [Probe 6/6] The Destructuring Trap Simulation");
   out.push("================================================================================");
@@ -158,19 +158,19 @@ export function runProbe6() {
   return out.join("\n");
 }
 
-export function runDispatcherTour() {
+export function runDispatcherTour(): string {
   return [runProbe1(), "\n" + runProbe2(), "\n" + runProbe3(), "\n" + runProbe4()].join("\n");
 }
 
-export function runAsyncStateTour() {
+export function runAsyncStateTour(): string {
   return [runProbe5(), "\n" + runProbe6()].join("\n");
 }
 
-export function runFullTour() {
+export function runFullTour(): string {
   return [runDispatcherTour(), "\n" + runAsyncStateTour()].join("\n");
 }
 
-export function probeShape(shape) {
+export function probeShape(shape: any): string {
   const lines = [
     `Input Shape: ${formatJson(shape)}`,
     `Union Type:  Shape = Circle | Square | Rect`,
@@ -187,19 +187,19 @@ export function probeShape(shape) {
   lines.push(`  Discriminant Evaluated: kind = "${shape.kind}"`);
 
   try {
-    const computedArea = area(shape);
-    const branchInfo = {
+    const computedArea = area(shape as Shape);
+    const branchInfo: Record<string, string> = {
       circle: "Eliminated [Square, Rect]. Narrowed to Circle -> licensed to read .radius",
       square: "Eliminated [Circle, Rect]. Narrowed to Square -> licensed to read .side",
       rect:   "Eliminated [Circle, Square]. Narrowed to Rect -> licensed to read .width, .height",
-    }[shape.kind];
+    };
 
     lines.push(
-      `  Control-Flow Analysis: ${branchInfo}`,
+      `  Control-Flow Analysis: ${branchInfo[shape.kind] ?? "Unknown"}`,
       `  Computed Area:         ${computedArea}`,
       `  Exhaustiveness:        HANDLED (fell into valid known case)`,
     );
-  } catch (err) {
+  } catch (err: any) {
     lines.push(
       `  Control-Flow Analysis: No case matched "${shape.kind}"`,
       `  Exhaustive Branch:     TRIGGERED assertNever(shape)`,
@@ -211,7 +211,7 @@ export function probeShape(shape) {
   return lines.join("\n");
 }
 
-export function probeState(state, options = {}) {
+export function probeState(state: any, options: { destructured?: boolean } = {}): string {
   const isDestructured = options.destructured ?? false;
   const lines = [
     `Async State: ${formatJson(state)}`,
@@ -235,12 +235,12 @@ export function probeState(state, options = {}) {
   }
 
   try {
-    const rendered = view(state);
+    const rendered = view(state as AsyncState<unknown>);
     lines.push(
       `  Narrowed View:         ${formatJson(rendered)}`,
       `  State Exclusivity:     PASSED (data and error never coexist)`,
     );
-  } catch (err) {
+  } catch (err: any) {
     lines.push(
       `  Exhaustive Branch:     TRIGGERED assertNever(state)`,
       `  Result:                BLOCKED (${err.message})`,
@@ -250,7 +250,7 @@ export function probeState(state, options = {}) {
   return lines.join("\n");
 }
 
-function parseJsonOrRaw(input) {
+function parseJsonOrRaw(input: string): any {
   try {
     return JSON.parse(input);
   } catch {
@@ -258,13 +258,13 @@ function parseJsonOrRaw(input) {
   }
 }
 
-async function waitForEnter(rl, promptText) {
-  return new Promise((resolve) => {
-    rl.question(promptText, () => resolve());
-  });
+function waitForEnter(rl: readline.Interface, promptText: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  rl.question(promptText, () => resolve());
+  return promise;
 }
 
-export async function runSteppedSession() {
+export async function runSteppedSession(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -282,18 +282,18 @@ export async function runSteppedSession() {
   await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: Unhandled Variant & assertNever Exhaustiveness] ");
 
   console.log("\n" + runProbe4());
-  console.log("\nAll 4 shape dispatcher probes completed! Type 'npm run lab' for the interactive REPL.\n");
+  console.log("\nAll 4 shape dispatcher probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
-export async function startRepl() {
+export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "lab-unions> ",
   });
 
-  console.log("\nTypeScript Discriminated Unions Interactive Lab");
+  console.log("\nTypeScript Discriminated Unions Interactive Lab (running with Deno)");
   console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', 'probe 5', or 'probe 6'.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

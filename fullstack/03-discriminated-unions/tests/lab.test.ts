@@ -12,7 +12,7 @@ import {
   runDispatcherTour,
   runAsyncStateTour,
   runFullTour,
-} from "../lab.mjs";
+} from "../lab.ts";
 
 test("runProbe1 details circle dispatch", () => {
   const result = runProbe1();
