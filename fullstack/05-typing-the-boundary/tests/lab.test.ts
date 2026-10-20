@@ -18,25 +18,25 @@ test("runProbe1 details valid untrusted payload", () => {
 test("runProbe2 details missing field crash vs schema catch", () => {
   const result = runProbe2();
   assert.match(result, /RUNTIME CRASH/);
-  assert.match(result, /BOUNDARY CHECK:\s+REJECTED/);
-  assert.match(result, /CRASH PREVENTED:\s+YES/);
+  assert.match(result, /BOUNDARY CHECK:\s+.*REJECTED/);
+  assert.match(result, /CRASH PREVENTED:\s+.*PASS/);
 });
 
 test("runProbe3 details corrupted field handling", () => {
   const result = runProbe3();
   assert.match(result, /TypeError: user\.email\.toLowerCase is not a function/);
-  assert.match(result, /Door B \(safeParse\): Caught at boundary/);
+  assert.match(result, /Door B \(safeParse\):\s+.*CAUGHT/);
 });
 
 test("runProbe4 details API drift detection", () => {
   const result = runProbe4();
   assert.match(result, /Backend renamed 'email' to 'email_address'/);
-  assert.match(result, /safeParse immediately fails on missing 'email'/);
+  assert.match(result, /Door B Gate:\s+.*PREVENTED/);
 });
 
 test("probeBoundaryDoors handles programmatic calls", () => {
   const res = probeBoundaryDoors({ id: "1", name: "Ada", email: "ada@x.com", role: "admin" });
-  assert.match(res, /Schema Gate:\s+PASSED/);
+  assert.match(res, /Schema Gate:\s+.*PASSED/);
 });
 
 test("guided tour runs cleanly", () => {

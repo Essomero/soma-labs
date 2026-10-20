@@ -33,7 +33,7 @@ test("runProbe5 details async state union exclusivity", () => {
 
 test("runProbe6 details the destructuring trap", () => {
   const result = runProbe6();
-  assert.match(result, /DESTRUCTURING TRAP/);
+  assert.match(result, /Destructuring state before narrowing/i);
   assert.match(result, /The Senior Fix/);
 });
 

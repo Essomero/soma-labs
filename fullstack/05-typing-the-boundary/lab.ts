@@ -31,80 +31,88 @@ import {
   array,
   type Schema,
 } from "./src/schema.ts";
-import { readJson, decode } from "./src/boundary.ts";
+import { readJson, decode, type ReadJsonResult } from "./src/boundary.ts";
+import {
+  theme,
+  badge,
+  card,
+  treeStep,
+  dataFlowPipeline,
+  highlightTs,
+} from "../common/tui.ts";
 
 export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
 export function runProbe1(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 1/4] Trust Boundary: Valid Untrusted Payload");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/schema.ts & src/boundary.ts):");
-  out.push("  const userSchema = object({ id: string(), name: string(), email: string(), role: enumeration([\"admin\", \"member\"]) });");
-  out.push("  function safeParse(schema, value);");
-
-  out.push("\nRaw Input:");
-  out.push("  '{\"id\":\"u-101\",\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.engine\",\"role\":\"admin\"}'");
-
-  out.push("\nComparison:");
-  out.push("  • Door A (as User):    Compiles with 0 warnings. user.email.toLowerCase() succeeds.");
-  out.push("  • Door B (safeParse):  Validates shape at boundary. Returns verified typed data.");
-  out.push("  • Danger:              Door A succeeded only by luck! If the upstream API omitted 'email', Door A would crash.");
-  return out.join("\n");
+  return card("[Probe 1/4] Trust Boundary: Valid Untrusted Payload", [
+    theme.slate("Code Under Test (src/schema.ts & src/boundary.ts):"),
+    "  " + highlightTs('const userSchema = object({ id: string(), name: string(), email: string(), role: enumeration(["admin", "member"]) });'),
+    "  " + highlightTs('function safeParse(schema: Schema<T>, value: unknown): SafeParseResult<T>;'),
+    "",
+    theme.slate("Raw Input:"),
+    "  " + theme.green('\'{"id":"u-101","name":"Ada Lovelace","email":"ada@analytical.engine","role":"admin"}\''),
+    "",
+    theme.slate("Comparison:"),
+    "  " + treeStep("Door A (as User)", badge("LUCK", "warning") + " " + theme.slate("Compiles with 0 warnings. user.email.toLowerCase() succeeds")),
+    "  " + treeStep("Door B (safeParse)", badge("SAFE", "pass") + " " + theme.green("Validates shape at boundary. Returns verified typed data")),
+    "  " + treeStep("Danger", theme.rose("Door A succeeded only by luck! If upstream API omitted 'email', Door A crashes")),
+  ]);
 }
 
 export function runProbe2(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 2/4] Missing Required Field: The Type Cast Crash");
-  out.push("================================================================================");
-  out.push("\nCode Under Test:");
-  out.push("  // Door A — The Type Assertion:");
-  out.push("  const raw = await res.json();");
-  out.push("  const user = raw as User; // Lie to the compiler: 'trust me'");
-  out.push("  console.log(user.email.toLowerCase());");
+  const pipeline = dataFlowPipeline([
+    { label: "Untrusted JSON", sub: "Missing 'email'" },
+    { label: "Door A (as User)", sub: "Runtime CRASH" },
+    { label: "Door B (Schema)", sub: "safeParse Gate" },
+    { label: "HTTP 400 Handle", sub: "Crash Prevented" },
+  ]);
 
-  out.push("\nExecution with payload missing 'email' ('{\"id\":\"u-102\",\"name\":\"Charles Babbage\",\"role\":\"member\"}'):");
-  out.push("  • COMPILER CHECK:   BYPASSED. The 'as User' cast shuts off all compiler errors.");
-  out.push("  • COMPILE ERROR:    NONE (compiles cleanly).");
-  out.push("  • RUNTIME CRASH:    TypeError: Cannot read properties of undefined (reading 'toLowerCase')");
-  out.push("  • OUTCOME:          PRODUCTION OUTAGE. The type cast made a promise the runtime never kept.");
-
-  out.push("\nDoor B — The Schema Gate:");
-  out.push("  const result = userSchema.safeParse(raw);");
-  out.push("  • BOUNDARY CHECK:   REJECTED BEFORE BUSINESS LOGIC");
-  out.push("  • ISSUE PATH:       [\"email\"]");
-  out.push("  • REASON:           email: expected string");
-  out.push("  • CRASH PREVENTED:  YES. Application returns HTTP 400 or handles missing field gracefully.");
-  return out.join("\n");
+  return card("[Probe 2/4] Missing Required Field: The Type Cast Crash", [
+    theme.slate("Code Under Test:"),
+    "  " + theme.rose("// Door A — The Type Assertion Lie:") + "",
+    "  " + highlightTs('const user = raw as User; // Lie to the compiler: "trust me"'),
+    "  " + highlightTs('console.log(user.email.toLowerCase());'),
+    "",
+    theme.slate("Boundary Flowchart:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Door A Execution (payload missing 'email'):"),
+    "  " + treeStep("1. COMPILER CHECK", theme.rose("BYPASSED ('as User' shuts off compiler checking)")),
+    "  " + treeStep("2. COMPILE ERROR", theme.rose("NONE (compiles cleanly)")),
+    "  " + treeStep("3. RUNTIME CRASH", badge("PRODUCTION OUTAGE", "fail") + " " + theme.rose("TypeError: Cannot read properties of undefined (reading 'toLowerCase')")),
+    "  " + treeStep("4. VERDICT", theme.bold("A type cast is a promise the runtime never made")),
+    "",
+    theme.slate("Door B Execution (The Schema Gate):"),
+    "  " + highlightTs('const result = userSchema.safeParse(raw);'),
+    "  " + treeStep("1. BOUNDARY CHECK", badge("REJECTED", "refused") + " " + theme.rose('Caught at entry before reaching business logic')),
+    "  " + treeStep("2. ISSUE PATH", theme.cyan('["email"]')),
+    "  " + treeStep("3. REASON", theme.amber('email: expected string')),
+    "  " + treeStep("4. CRASH PREVENTED", badge("PASS", "pass") + " " + theme.green("YES. Application returns HTTP 400 cleanly"), true),
+  ]);
 }
 
 export function runProbe3(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 3/4] Incompatible Field Type: Corrupt Payload");
-  out.push("================================================================================");
-  out.push("\nExecution with corrupted payload ('{\"id\":\"u-103\",\"name\":\"Corrupt Row\",\"email\":12345,\"role\":\"member\"}'):");
-  out.push("  • Door A (as User): Compiler believes 'email' is string.");
-  out.push("                      Runtime execution user.email.toLowerCase() throws:");
-  out.push("                      TypeError: user.email.toLowerCase is not a function (received number)");
-  out.push("  • Door B (safeParse): Caught at boundary. Error: email: expected string at path ['email'].");
-  return out.join("\n");
+  return card("[Probe 3/4] Incompatible Field Type: Corrupt Payload", [
+    theme.slate("Execution with corrupted payload ('{\"id\":\"u-103\",\"name\":\"Corrupt Row\",\"email\":12345,\"role\":\"member\"}'):"),
+    "",
+    "  " + treeStep("Door A (as User)", theme.rose("Compiler believes 'email' is string")),
+    "  " + treeStep("Runtime Error", badge("CRASH", "fail") + " " + theme.rose("TypeError: user.email.toLowerCase is not a function (received number)")),
+    "",
+    "  " + treeStep("Door B (safeParse)", badge("CAUGHT", "pass") + " " + theme.green("Intercepted at boundary before business logic")),
+    "  " + treeStep("Diagnostic", theme.amber("email: expected string at path ['email']"), true),
+  ]);
 }
 
 export function runProbe4(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 4/4] API Drift: Renamed Backend Field");
-  out.push("================================================================================");
-  out.push("\nExecution with drifted payload ('{\"id\":\"u-104\",\"name\":\"Drifted API\",\"email_address\":\"drift@api.dev\",\"role\":\"member\"}'):");
-  out.push("  • The Problem:   Backend renamed 'email' to 'email_address'.");
-  out.push("  • Door A Impact: Downstream code expects 'user.email' and gets undefined.");
-  out.push("  • Door B Gate:   safeParse immediately fails on missing 'email', surfacing contract drift in staging.");
-  return out.join("\n");
+  return card("[Probe 4/4] API Drift: Renamed Backend Field", [
+    theme.slate("Execution with drifted payload ('{\"id\":\"u-104\",\"name\":\"Drifted API\",\"email_address\":\"drift@api.dev\",\"role\":\"member\"}'):"),
+    "",
+    "  " + treeStep("The Problem", theme.amber("Backend renamed 'email' to 'email_address'")),
+    "  " + treeStep("Door A Impact", badge("SILENT BUG", "fail") + " " + theme.rose("Downstream code expects 'user.email' and gets undefined")),
+    "  " + treeStep("Door B Gate", badge("PREVENTED", "pass") + " " + theme.green("safeParse fails on missing 'email', surfacing contract drift in staging"), true),
+  ]);
 }
 
 export function runBoundaryTour(): string {
@@ -117,11 +125,11 @@ export function probeBoundaryDoors(rawInput: unknown, schema: Schema<any> = user
     `Raw Input:       ${typeof rawInput === "string" ? rawInput : formatJson(rawInput)}`,
   ];
 
-  const parsedJson = typeof rawInput === "string" ? readJson(rawInput) : { ok: true, value: rawInput };
+  const parsedJson: ReadJsonResult = typeof rawInput === "string" ? readJson(rawInput) : { ok: true, value: rawInput };
 
   if (!parsedJson.ok) {
     lines.push(
-      `\n[JSON Parse Check] FAILED (malformed JSON text: ${parsedJson.message})`,
+      `\n[JSON Parse Check] ` + badge("FAILED", "refused") + ` (malformed JSON: ${parsedJson.message})`,
       `Both doors reject malformed syntax.`,
     );
     return lines.join("\n");
@@ -130,7 +138,7 @@ export function probeBoundaryDoors(rawInput: unknown, schema: Schema<any> = user
   const payload = parsedJson.value as any;
 
   lines.push(`\n--------------------------------------------------------------------------------`);
-  lines.push(`[DOOR A] The Cast: (payload as User)`);
+  lines.push(`[DOOR A] The Cast: (payload as User) ` + badge("UNCHECKED", "warning"));
   lines.push(`--------------------------------------------------------------------------------`);
   lines.push(`  Compiler Check:   BYPASSED ('as' instructs compiler to disable checking)`);
   lines.push(`  Compile Error:    NONE (compiles cleanly)`);
@@ -147,35 +155,35 @@ export function probeBoundaryDoors(rawInput: unknown, schema: Schema<any> = user
       throw new TypeError(`payload.email.toLowerCase is not a function (received ${typeof payload.email})`);
     }
     lines.push(
-      `  Downstream Code:  user.email.toLowerCase() -> "${payload.email.toLowerCase()}"`,
-      `  Execution Status: SUCCESS (payload happened to meet expectations)`,
+      `  Downstream Code:  user.email.toLowerCase() → "${payload.email.toLowerCase()}"`,
+      `  Execution Status: ` + badge("SUCCESS", "pass") + ` (payload happened to meet expectations)`,
     );
   } catch (err: any) {
     lines.push(
       `  Downstream Code:  user.email.toLowerCase()`,
-      `  RUNTIME CRASH:    ${err.name}: ${err.message}`,
+      `  RUNTIME CRASH:    ` + badge("OUTAGE", "fail") + ` ${err.name}: ${err.message}`,
       `  Verdict:          PRODUCTION OUTAGE. A type cast is a promise the runtime never made.`,
     );
   }
 
   lines.push(`\n--------------------------------------------------------------------------------`);
-  lines.push(`[DOOR B] The Schema Gate: schema.safeParse(payload)`);
+  lines.push(`[DOOR B] The Schema Gate: schema.safeParse(payload) ` + badge("VERIFIED", "pass"));
   lines.push(`--------------------------------------------------------------------------------`);
   const result = safeParse(schema, payload);
 
   if (result.success) {
     lines.push(
-      `  Schema Gate:      PASSED`,
+      `  Schema Gate:      ` + badge("PASSED", "pass"),
       `  Validated Data:   ${formatJson(result.data)}`,
-      `  Downstream Code:  user.email.toLowerCase() -> "${result.data.email.toLowerCase()}"`,
+      `  Downstream Code:  user.email.toLowerCase() → "${result.data.email.toLowerCase()}"`,
       `  Guaranteed Type:  Downstream code only receives verified data with non-null members.`,
     );
   } else {
     lines.push(
-      `  Schema Gate:      REJECTED AT THE BOUNDARY`,
+      `  Schema Gate:      ` + badge("REJECTED", "refused"),
       `  Error Path:       [${result.error.path.map((p) => `"${p}"`).join(", ")}]`,
       `  Error Message:    ${result.error.message}`,
-      `  Crash Prevented:  YES (caught before reaching business logic)`,
+      `  Crash Prevented:  ` + badge("YES", "pass"),
       `  Graceful Action:  Return HTTP 400 or render fallback error screen.`,
     );
   }
@@ -206,16 +214,16 @@ export async function runSteppedSession(): Promise<void> {
   console.log("\nStarting Stepped Walkthrough: The Trust Boundary (4 Probes)\n");
 
   console.log(runProbe1());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/4: Missing Required Field Crash] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 2/4: Missing Required Field Crash ➔] "));
 
   console.log("\n" + runProbe2());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/4: Incompatible Field Type] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 3/4: Incompatible Field Type ➔] "));
 
   console.log("\n" + runProbe3());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: API Schema Drift Detection] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 4/4: API Schema Drift Detection ➔] "));
 
   console.log("\n" + runProbe4());
-  console.log("\nAll 4 trust boundary probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
+  console.log("\n" + badge("COMPLETE", "pass") + " All 4 trust boundary probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
@@ -223,10 +231,10 @@ export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "lab-boundary> ",
+    prompt: theme.cyan("lab-boundary ❯ "),
   });
 
-  console.log("\nTypeScript Trust Boundary Interactive Lab (running with Deno)");
+  console.log(`\n${theme.cyan(theme.bold("❖ TypeScript Trust Boundary Interactive Lab"))} ${theme.dim("(running with Deno)")}`);
   console.log("Type 'probe 1', 'probe 2', 'probe 3', or 'probe 4'.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

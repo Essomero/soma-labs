@@ -22,104 +22,109 @@
 import readline from "node:readline";
 import { identity, identityAny, identityUnknown, tagOf } from "./src/relationship.ts";
 import { at, requireMembers } from "./src/constraints.ts";
+import {
+  theme,
+  badge,
+  card,
+  treeStep,
+  dataFlowPipeline,
+  highlightTs,
+} from "../common/tui.ts";
 
 export function formatValue(val: unknown): string {
   return JSON.stringify(val);
 }
 
 export function runProbe1(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 1/3] Primitive Value: The Identity Relationship");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.ts):");
-  out.push("  function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }");
-  out.push("  function identityAny(value: any): { tag: string; value: any } { return { tag: \"any\", value }; }");
-  out.push("  function identityUnknown(value: unknown): { tag: string; value: unknown } { return { tag: \"unknown\", value }; }");
+  const pipeline = dataFlowPipeline([
+    { label: "Call Site", sub: 'identity("hello")' },
+    { label: "Parameter Match", sub: "value: T" },
+    { label: "Inference Site", sub: "T := string" },
+    { label: "Return Contract", sub: "return string" },
+  ]);
 
-  out.push("\nExecution at Call Site:");
-  out.push("  const input = \"hello\";");
-  out.push("  const result = identity(input);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. CALL SITE:       identity(\"hello\")");
-  out.push("  2. PARAMETER MATCH: Parameter 'value: T' receives argument \"hello\" (type: string)");
-  out.push("  3. TYPE INFERENCE:  Compiler observes argument type. Binds type parameter T := string");
-  out.push("  4. RETURN BINDING:  Declared return type is 'T'. Since T = string, return type := string");
-  out.push("  5. DOWNSTREAM:      const result: string = identity(\"hello\");");
-  out.push("                      result.toUpperCase() is VALID and checked.");
-  out.push("                      result.toFixed()     is REFUSED (TS2339: does not exist on type 'string')");
-
-  out.push("\nContrast with the Alternatives:");
-  out.push("  • identityAny(\"hello\"):");
-  out.push("    - Parameter 'value: any' disables type checking.");
-  out.push("    - Return type: 'any' (type relationship erased).");
-  out.push("    - Hazard: resultAny.nonExistent() compiles with ZERO errors, crashes at runtime!");
-
-  out.push("  • identityUnknown(\"hello\"):");
-  out.push("    - Parameter 'value: unknown' safely accepts any type.");
-  out.push("    - Return type: 'unknown' (compiler refuses to commit to what was passed).");
-  out.push("    - Blocker: Calling resultUnknown.toUpperCase() is REFUSED (TS18046) until manual cast.");
-
-  out.push("\nVerdict:");
-  out.push("  The generic is the only annotation where the return type is a function of the argument type.");
-  return out.join("\n");
+  return card("[Probe 1/3] Primitive Value: The Identity Relationship", [
+    theme.slate("Code Under Test (src/relationship.ts):"),
+    "  " + highlightTs('function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }'),
+    "  " + highlightTs('function identityAny(value: any): { tag: string; value: any } { return { tag: "any", value }; }'),
+    "  " + highlightTs('function identityUnknown(value: unknown): { tag: string; value: unknown } { return { tag: "unknown", value }; }'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('const input = "hello";'),
+    "  " + highlightTs('const result = identity(input);'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. CALL SITE", 'identity("hello")'),
+    "  " + treeStep("2. PARAMETER MATCH", 'Parameter "value: T" receives argument "hello" (type: string)'),
+    "  " + treeStep("3. TYPE INFERENCE", theme.amber("Compiler binds type parameter T := string")),
+    "  " + treeStep("4. RETURN BINDING", theme.cyan("Declared return type is T (string)")),
+    "  " + treeStep("5. DOWNSTREAM", badge("PASS", "pass") + " " + theme.green("result.toUpperCase() is valid and checked")),
+    "                    " + badge("REFUSED", "refused") + " " + theme.rose("result.toFixed() is refused (TS2339: does not exist on type 'string')"),
+    "",
+    theme.slate("Contrast with the Alternatives:"),
+    "  " + badge("any", "collapse") + "      " + theme.amber('identityAny("hello")') + "     → Type erased. " + theme.rose("Silent runtime crash hazard!"),
+    "  " + badge("unknown", "info") + "  " + theme.cyan('identityUnknown("hello")') + " → Refuses to commit. " + theme.slate("Manual cast required (TS18046)."),
+    "",
+    theme.slate("Verdict:"),
+    "  " + theme.bold("A generic is the only annotation where the return type is a function of the argument type."),
+  ]);
 }
 
 export function runProbe2(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 2/3] Array Value: Element-Type Relationship");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.ts):");
-  out.push("  function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }");
-  out.push("  function first<T>(arr: T[]): T | undefined { return arr[0]; }");
+  const pipeline = dataFlowPipeline([
+    { label: "Call Site", sub: "identity([1, 2, 3])" },
+    { label: "Element Check", sub: "number[]" },
+    { label: "Preservation", sub: "T := number[]" },
+    { label: "first<T>", sub: "number | undef" },
+  ]);
 
-  out.push("\nExecution at Call Site:");
-  out.push("  const numbers = [1, 2, 3];");
-  out.push("  const result = identity(numbers);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. CALL SITE:       identity([1, 2, 3])");
-  out.push("  2. ELEMENT CHECK:   Compiler inspects array elements (all numbers) -> type is number[]");
-  out.push("  3. TYPE INFERENCE:  Binds T := number[] (preserves element type, does NOT collapse to 'object' or 'any[]')");
-  out.push("  4. RETURN BINDING:  Returns number[] intact.");
-  out.push("  5. EXTENSION (first<T>):");
-  out.push("     Calling first(numbers) matches 'arr: T[]' against 'number[]' -> infers T := number.");
-  out.push("     The return type 'T | undefined' resolves to 'number | undefined'.");
-
-  out.push("\nVerdict:");
-  out.push("  Generics propagate nested element types across collections without losing shape precision.");
-  return out.join("\n");
+  return card("[Probe 2/3] Array Value: Element-Type Relationship", [
+    theme.slate("Code Under Test (src/relationship.ts):"),
+    "  " + highlightTs('function identity<T>(value: T): { tag: string; value: T } { return { tag: tagOf(value), value }; }'),
+    "  " + highlightTs('function first<T>(arr: T[]): T | undefined { return arr[0]; }'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('const numbers = [1, 2, 3];'),
+    "  " + highlightTs('const result = identity(numbers);'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. CALL SITE", 'identity([1, 2, 3])'),
+    "  " + treeStep("2. ELEMENT CHECK", "Compiler inspects array elements (all numbers) → type is number[]"),
+    "  " + treeStep("3. TYPE INFERENCE", theme.amber("Binds T := number[] (does NOT collapse to 'object' or 'any[]')")),
+    "  " + treeStep("4. RETURN BINDING", theme.cyan("Returns number[] intact")),
+    "  " + treeStep("5. EXTENSION", badge("PASS", "pass") + " " + theme.green("first(numbers) matches arr: T[] → returns number | undefined")),
+    "",
+    theme.slate("Verdict:"),
+    "  " + theme.bold("Generics propagate nested element types across collections without losing shape precision."),
+  ]);
 }
 
 export function runProbe3(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 3/3] Object Shape: Downstream Property Access");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/relationship.ts):");
-  out.push("  interface User { id: number; name: string; role: string; }");
-  out.push("  const user: User = { id: 101, name: \"Ada Lovelace\", role: \"admin\" };");
-  out.push("  const result = identity(user);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. CALL SITE:       identity(user)");
-  out.push("  2. TYPE INFERENCE:  Binds T := User ({ id: number; name: string; role: string })");
-  out.push("  3. RETURN BINDING:  result has type User.");
-  out.push("  4. DOWNSTREAM ACCESS CHECKS:");
-  out.push("     • result.name:       Property exists on T (type string) -> ALLOWED (value: \"Ada Lovelace\")");
-  out.push("     • result.ghostField: Property does NOT exist on T!");
-  out.push("                          Compiler REFUSES before build: TS2339 Property 'ghostField' does not exist on type 'User'");
-
-  out.push("\nContrast with any:");
-  out.push("  const resAny = identityAny(user);");
-  out.push("  resAny.ghostField;  // Compiler says OK -> At runtime evaluates to undefined (silent bug!)");
-
-  out.push("\nContrast with unknown:");
-  out.push("  const resUnk = identityUnknown(user);");
-  out.push("  resUnk.name;        // Compiler REFUSES: 'resUnk' is of type 'unknown'. Requires (resUnk as User).name");
-  return out.join("\n");
+  return card("[Probe 3/3] Object Shape: Downstream Property Access", [
+    theme.slate("Code Under Test (src/relationship.ts):"),
+    "  " + highlightTs('interface User { id: number; name: string; role: string; }'),
+    "  " + highlightTs('const user: User = { id: 101, name: "Ada Lovelace", role: "admin" };'),
+    "  " + highlightTs('const result = identity(user);'),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. CALL SITE", "identity(user)"),
+    "  " + treeStep("2. TYPE INFERENCE", theme.amber("Binds T := User ({ id: number; name: string; role: string })")),
+    "  " + treeStep("3. RETURN BINDING", theme.cyan("result has type User")),
+    "  " + treeStep("4. DOWNSTREAM ACCESS CHECKS", badge("PASS", "pass") + " " + theme.green('result.name exists on T → ALLOWED (value: "Ada Lovelace")')),
+    "                             " + badge("REFUSED", "refused") + " " + theme.rose("result.ghostField does NOT exist on T (TS2339)"),
+    "",
+    theme.slate("Contrast with any:"),
+    "  " + badge("any", "collapse") + "  " + highlightTs('const resAny = identityAny(user); resAny.ghostField;') + " → " + theme.rose("Compiles OK, returns undefined at runtime!"),
+    "",
+    theme.slate("Contrast with unknown:"),
+    "  " + badge("unknown", "info") + " " + highlightTs('const resUnk = identityUnknown(user); resUnk.name;') + " → " + theme.slate("Refused: 'resUnk' is of type 'unknown'."),
+  ]);
 }
 
 export function runRelationshipTour(): string {
@@ -133,12 +138,12 @@ export function probeRelationship(value: unknown): string {
   const unkResult = identityUnknown(value);
 
   const lines = [
-    `Tested Function: identity(x) vs identityAny(x) vs identityUnknown(x)`,
-    `Input argument:  ${formatValue(value)}`,
-    `  Inferred T:           ${tag}`,
-    `  generic <T>(x: T): T  -> return tag: ${genResult.tag} (relationship preserved)`,
-    `  any (x: any): any     -> return tag: ${anyResult.tag} (relationship erased; checker blind)`,
-    `  unknown (x: unk): unk -> return tag: ${unkResult.tag} (relationship refused; manual cast required)`,
+    theme.slate(`Tested Function: identity(x) vs identityAny(x) vs identityUnknown(x)`),
+    `Input argument:  ${theme.cyan(formatValue(value))}`,
+    `  Inferred T:           ${theme.amber(tag)}`,
+    `  generic <T>(x: T): T  → return tag: ${theme.green(genResult.tag)} ` + badge("PRESERVED", "pass"),
+    `  any (x: any): any     → return tag: ${theme.amber(anyResult.tag)} ` + badge("ERASED", "collapse"),
+    `  unknown (x: unk): unk → return tag: ${theme.cyan(unkResult.tag)} ` + badge("REFUSED", "refused"),
   ];
   return lines.join("\n");
 }
@@ -148,23 +153,23 @@ export function probeConstraintAt(obj: any, key: any): string {
   const isAllowed = allowedKeys.includes(key);
 
   const lines = [
-    `Tested Function: at(obj, key): representing <T, K extends keyof T>(obj: T, key: K): T[K]`,
-    `Target object:   ${formatValue(obj)}`,
-    `Allowed keys (keyof T): [${allowedKeys.map((k) => `"${k}"`).join(", ")}]`,
-    `Requested key K: "${key}"`,
+    theme.slate(`Tested Function: at(obj, key): representing <T, K extends keyof T>(obj: T, key: K): T[K]`),
+    `Target object:   ${theme.cyan(formatValue(obj))}`,
+    `Allowed keys (keyof T): [${allowedKeys.map((k) => theme.amber(`"${k}"`)).join(", ")}]`,
+    `Requested key K: ${theme.cyan(`"${key}"`)}`,
   ];
 
   if (isAllowed) {
     const val = at(obj, key);
     lines.push(
-      `  Entrance Gate:    PASS ("${key}" satisfies 'K extends keyof T')`,
-      `  Internal License: GRANTED (safe to index obj["${key}"])`,
-      `  Result value:     ${formatValue(val)} (type: ${typeof val})`,
+      "  Entrance Gate:    " + badge("PASS", "pass") + ` ("${key}" satisfies 'K extends keyof T')`,
+      "  Internal License: " + badge("GRANTED", "pass") + ` (safe to index obj["${key}"])`,
+      `  Result value:     ${theme.green(formatValue(val))} (type: ${typeof val})`,
     );
   } else {
     lines.push(
-      `  Entrance Gate:    REFUSED (TS2345: Argument of type '"${key}"' is not assignable to keyof T)`,
-      `  Runtime Guard:    Blocked before access (RangeError: key '${key}' is not a key of the object)`,
+      "  Entrance Gate:    " + badge("REFUSED", "refused") + ` (TS2345: Argument of type '"${key}"' is not assignable to keyof T)`,
+      "  Runtime Guard:    " + badge("BLOCKED", "fail") + ` (RangeError: key '${key}' is not a key of the object)`,
     );
   }
   return lines.join("\n");
@@ -172,40 +177,37 @@ export function probeConstraintAt(obj: any, key: any): string {
 
 export function probeConstraintRequire(obj: any, requiredMembers: string[]): string {
   const lines = [
-    `Tested Function: requireMembers(value, members): representing <T extends { ${requiredMembers.join(", ")} }>(val: T): T`,
-    `Input value:     ${formatValue(obj)}`,
-    `Constraint:      T extends { ${requiredMembers.join(", ")} }`,
+    theme.slate(`Tested Function: requireMembers(value, members): representing <T extends { ${requiredMembers.join(", ")} }>(val: T): T`),
+    `Input value:     ${theme.cyan(formatValue(obj))}`,
+    `Constraint:      T extends { ${theme.amber(requiredMembers.join(", "))} }`,
   ];
   try {
     requireMembers(obj, requiredMembers);
     lines.push(
-      `  Entrance Gate:    PASS (satisfies required members: [${requiredMembers.join(", ")}])`,
+      "  Entrance Gate:    " + badge("PASS", "pass") + ` (satisfies required members: [${requiredMembers.join(", ")}])`,
     );
   } catch (err: any) {
-    lines.push(`  Entrance Gate:    REFUSED (${err.message})`);
+    lines.push("  Entrance Gate:    " + badge("REFUSED", "refused") + ` (${err.message})`);
   }
   return lines.join("\n");
 }
 
 export function runConstraintsTour(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  TypeScript Generics Lab: The Constraint as License and Gate");
-  out.push("================================================================================");
   const sampleObj = { id: "u1", name: "Ada Lovelace", role: "admin" };
 
-  out.push("\n[Probe 1] Keyed Constraint: at(obj, key) with valid key 'name'");
-  out.push(probeConstraintAt(sampleObj, "name"));
-
-  out.push("\n[Probe 2] Keyed Constraint: at(obj, key) with missing key 'salary'");
-  out.push(probeConstraintAt(sampleObj, "salary"));
-
-  out.push("\n[Probe 3] Entrance Requirement: requireMembers(value, ['id', 'role'])");
-  out.push(probeConstraintRequire(sampleObj, ["id", "role"]));
-
-  out.push("\n[Probe 4] Entrance Requirement: requireMembers(value, ['id', 'department'])");
-  out.push(probeConstraintRequire(sampleObj, ["id", "department"]));
-  return out.join("\n");
+  return card("TypeScript Generics Lab · The Constraint as License and Gate", [
+    theme.bold("[Probe 1] Keyed Constraint: at(obj, key) with valid key 'name'"),
+    probeConstraintAt(sampleObj, "name"),
+    "",
+    theme.bold("[Probe 2] Keyed Constraint: at(obj, key) with missing key 'salary'"),
+    probeConstraintAt(sampleObj, "salary"),
+    "",
+    theme.bold("[Probe 3] Entrance Requirement: requireMembers(value, ['id', 'role'])"),
+    probeConstraintRequire(sampleObj, ["id", "role"]),
+    "",
+    theme.bold("[Probe 4] Entrance Requirement: requireMembers(value, ['id', 'department'])"),
+    probeConstraintRequire(sampleObj, ["id", "department"]),
+  ]);
 }
 
 export function runFullTour(): string {
@@ -235,13 +237,13 @@ export async function runSteppedSession(): Promise<void> {
   console.log("\nStarting Stepped Walkthrough: The Relationship Executable (3 Probes)\n");
 
   console.log(runProbe1());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/3: Array Element-Type Relationship] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 2/3: Array Element-Type Relationship ➔] "));
 
   console.log("\n" + runProbe2());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/3: Object Shape & Downstream Access] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 3/3: Object Shape & Downstream Access ➔] "));
 
   console.log("\n" + runProbe3());
-  console.log("\nAll 3 probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
+  console.log("\n" + badge("COMPLETE", "pass") + " All 3 probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
@@ -249,10 +251,10 @@ export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "lab-generics> ",
+    prompt: theme.cyan("lab-generics ❯ "),
   });
 
-  console.log("\nTypeScript Generics Interactive Lab (running with Deno)");
+  console.log(`\n${theme.cyan(theme.bold("❖ TypeScript Generics Interactive Lab"))} ${theme.dim("(running with Deno)")}`);
   console.log("Type 'probe 1', 'probe 2', or 'probe 3' to run individual probes.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

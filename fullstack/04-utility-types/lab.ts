@@ -42,120 +42,123 @@ import {
   inferElement,
   inferReturn,
 } from "./src/conditional_types.ts";
+import {
+  theme,
+  badge,
+  card,
+  treeStep,
+  dataFlowPipeline,
+  highlightTs,
+} from "../common/tui.ts";
 
 export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
 export function runProbe1(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 1/5] Mapped Types: How Partial<T> Rebuilds Shapes");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.ts):");
-  out.push("  type Partial<T> = { [K in keyof T]?: T[K] };");
-  out.push("  function myPartial(shape): shape");
+  const pipeline = dataFlowPipeline([
+    { label: "Query Keys", sub: "keyof User" },
+    { label: "Mapped Loop", sub: "[K in keyof T]?" },
+    { label: "Indexed Access", sub: "T[K]" },
+    { label: "Partial Shape", sub: "All optional" },
+  ]);
 
-  out.push("\nExecution at Call Site:");
-  out.push("  const User = { id: \"string\", email: \"string\", role: \"string\", age: \"number\" };");
-  out.push("  const result = myPartial(User);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. QUERY KEYS:       keyof User -> [\"id\", \"email\", \"role\", \"age\"]");
-  out.push("  2. MAPPED LOOP:      Iterates each member K in keyof T.");
-  out.push("  3. PROPERTY ACCESS:  T[K] indexes the original property type.");
-  out.push("  4. MODIFIER:         Appends '?' making each property optional.");
-  out.push("  5. TRANSFORMED TYPE: { id?: string; email?: string; role?: string; age?: number }");
-  return out.join("\n");
+  return card("[Probe 1/5] Mapped Types: How Partial<T> Rebuilds Shapes", [
+    theme.slate("Code Under Test (src/shape_ops.ts):"),
+    "  " + highlightTs('type Partial<T> = { [K in keyof T]?: T[K] };'),
+    "  " + highlightTs('function myPartial(shape: ShapeDescriptor): ShapeDescriptor;'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('const User = { id: "string", email: "string", role: "string", age: "number" };'),
+    "  " + highlightTs('const result = myPartial(User);'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. QUERY KEYS", theme.amber('keyof User → ["id", "email", "role", "age"]')),
+    "  " + treeStep("2. MAPPED LOOP", 'Iterates each member K in keyof T'),
+    "  " + treeStep("3. PROPERTY ACCESS", 'T[K] indexes the original property type'),
+    "  " + treeStep("4. MODIFIER", theme.green("Appends '?' making each property optional")),
+    "  " + treeStep("5. TRANSFORMED TYPE", badge("PASS", "pass") + " " + theme.cyan("{ id?: string; email?: string; role?: string; age?: number }"), true),
+  ]);
 }
 
 export function runProbe2(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 2/5] Mapped Types: Pick<T, K> & The Keyed Constraint");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.ts):");
-  out.push("  type Pick<T, K extends keyof T> = { [P in K]: T[P] };");
-  out.push("  function myPick(shape, keys): shape");
-
-  out.push("\nCase A — Valid Pick:");
-  out.push("  const result = myPick(User, [\"id\", \"email\"]);");
-  out.push("  • Constraint Check: [\"id\", \"email\"] extends keyof User -> VALID");
-  out.push("  • Filtered Shape:   { id: string; email: string }");
-
-  out.push("\nCase B — Key Outside Constraint:");
-  out.push("  const invalid = myPick(User, [\"id\", \"salary\"]);");
-  out.push("  • Constraint Check: 'salary' does not exist in keyof User!");
-  out.push("  • Compiler Refusal: TS2344: Type '\"salary\"' does not satisfy the constraint 'keyof User'.");
-  out.push("  • Runtime Guard:    Throws Error: unknown member: salary");
-  return out.join("\n");
+  return card("[Probe 2/5] Mapped Types: Pick<T, K> & The Keyed Constraint", [
+    theme.slate("Code Under Test (src/shape_ops.ts):"),
+    "  " + highlightTs('type Pick<T, K extends keyof T> = { [P in K]: T[P] };'),
+    "  " + highlightTs('function myPick(shape: ShapeDescriptor, keys: string[]): ShapeDescriptor;'),
+    "",
+    theme.slate("Case A — Valid Pick:"),
+    "  " + highlightTs('const result = myPick(User, ["id", "email"]);'),
+    "  " + treeStep("Constraint Check", badge("PASS", "pass") + ' ["id", "email"] extends keyof User → VALID'),
+    "  " + treeStep("Filtered Shape", theme.cyan("{ id: string; email: string }")),
+    "",
+    theme.slate("Case B — Key Outside Constraint:"),
+    "  " + highlightTs('const invalid = myPick(User, ["id", "salary"]);'),
+    "  " + treeStep("Constraint Check", badge("REFUSED", "refused") + theme.rose(" 'salary' does not exist in keyof User!")),
+    "  " + treeStep("Compiler Refusal", theme.rose("TS2344: Type '\"salary\"' does not satisfy the constraint 'keyof User'")),
+    "  " + treeStep("Runtime Guard", badge("BLOCKED", "fail") + theme.rose(" Throws Error: unknown member: salary"), true),
+  ]);
 }
 
 export function runProbe3(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 3/5] Derived Utilities: Omit<T, K> as Pick Inverted");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/shape_ops.ts):");
-  out.push("  type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;");
-  out.push("  function myOmit(shape, keys): shape");
-
-  out.push("\nExecution at Call Site:");
-  out.push("  const result = myOmit(User, [\"age\"]);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. FULL KEY SET:     keyof User -> [\"id\", \"email\", \"role\", \"age\"]");
-  out.push("  2. EXCLUSION FILTER: Exclude<keyof User, \"age\"> -> [\"id\", \"email\", \"role\"]");
-  out.push("  3. PICK COMPOSITION: Picks only the non-excluded keys.");
-  out.push("  4. TRANSFORMED TYPE: { id: string; email: string; role: string }");
-  return out.join("\n");
+  return card("[Probe 3/5] Derived Utilities: Omit<T, K> as Pick Inverted", [
+    theme.slate("Code Under Test (src/shape_ops.ts):"),
+    "  " + highlightTs('type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;'),
+    "  " + highlightTs('function myOmit(shape: ShapeDescriptor, keys: string[]): ShapeDescriptor;'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('const result = myOmit(User, ["age"]);'),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. FULL KEY SET", 'keyof User → ["id", "email", "role", "age"]'),
+    "  " + treeStep("2. EXCLUSION FILTER", theme.amber('Exclude<keyof User, "age"> → ["id", "email", "role"]')),
+    "  " + treeStep("3. PICK COMPOSITION", 'Picks only the non-excluded keys'),
+    "  " + treeStep("4. TRANSFORMED TYPE", badge("PASS", "pass") + " " + theme.cyan("{ id: string; email: string; role: string }"), true),
+  ]);
 }
 
 export function runProbe4(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 4/5] Conditional Types: Distribution Over Unions");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/conditional_types.ts):");
-  out.push("  type Exclude<T, U> = T extends U ? never : T;");
-
-  out.push("\nExecution at Call Site:");
-  out.push("  type Action = \"click\" | \"hover\" | \"scroll\";");
-  out.push("  type NoHover = Exclude<Action, \"hover\">;");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. DISTRIBUTION: Naked type parameter 'T' distributes across each union member in isolation:");
-  out.push("     • \"click\" extends \"hover\" ? never : \"click\"   ==>  \"click\"");
-  out.push("     • \"hover\" extends \"hover\" ? never : \"hover\"   ==>  never");
-  out.push("     • \"scroll\" extends \"hover\" ? never : \"scroll\" ==>  \"scroll\"");
-  out.push("  2. RE-UNIONING:  \"click\" | never | \"scroll\"");
-  out.push("  3. COLLAPSING:   'never' represents the empty set and vanishes from unions.");
-  out.push("  4. FINAL TYPE:   \"click\" | \"scroll\"");
-  return out.join("\n");
+  return card("[Probe 4/5] Conditional Types: Distribution Over Unions", [
+    theme.slate("Code Under Test (src/conditional_types.ts):"),
+    "  " + highlightTs('type Exclude<T, U> = T extends U ? never : T;'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('type Action = "click" | "hover" | "scroll";'),
+    "  " + highlightTs('type NoHover = Exclude<Action, "hover">;'),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. DISTRIBUTION", 'Naked type parameter "T" distributes across each member:'),
+    "     • \"click\" extends \"hover\" ? never : \"click\"   ==>  " + theme.green('"click"'),
+    "     • \"hover\" extends \"hover\" ? never : \"hover\"   ==>  " + theme.rose("never"),
+    "     • \"scroll\" extends \"hover\" ? never : \"scroll\" ==>  " + theme.green('"scroll"'),
+    "  " + treeStep("2. RE-UNIONING", '"click" | never | "scroll"'),
+    "  " + treeStep("3. COLLAPSING", "'never' represents empty set and vanishes from unions"),
+    "  " + treeStep("4. FINAL TYPE", badge("PASS", "pass") + " " + theme.green('"click" | "scroll"'), true),
+  ]);
 }
 
 export function runProbe5(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 5/5] Pattern Matching: Destructuring Types with infer");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/conditional_types.ts):");
-  out.push("  type ElementOf<T> = T extends (infer E)[] ? E : never;");
-  out.push("  type ReturnOf<F>  = F extends (...args: any[]) => infer R ? R : never;");
-
-  out.push("\nPattern 1 — Array Element Unboxing:");
-  out.push("  const desc = arrayOf(\"string\"); // representing string[]");
-  out.push("  • Pattern match: string[] matches (infer E)[] -> binds E := string");
-  out.push("  • Extracted Type: string");
-
-  out.push("\nPattern 2 — Function Return Unboxing:");
-  out.push("  const desc = fnOf(\"Promise<User>\"); // representing () => Promise<User>");
-  out.push("  • Pattern match: () => Promise<User> matches (...args) => infer R -> binds R := Promise<User>");
-  out.push("  • Extracted Type: Promise<User>");
-
-  out.push("\nVerdict:");
-  out.push("  'infer' is pattern-matching destructuring for the type system.");
-  return out.join("\n");
+  return card("[Probe 5/5] Pattern Matching: Destructuring Types with infer", [
+    theme.slate("Code Under Test (src/conditional_types.ts):"),
+    "  " + highlightTs('type ElementOf<T> = T extends (infer E)[] ? E : never;'),
+    "  " + highlightTs('type ReturnOf<F>  = F extends (...args: any[]) => infer R ? R : never;'),
+    "",
+    theme.slate("Pattern 1 — Array Element Unboxing:"),
+    "  " + highlightTs('const desc = arrayOf("string"); // representing string[]'),
+    "  " + treeStep("Pattern Match", "string[] matches (infer E)[] → binds " + theme.amber("E := string")),
+    "  " + treeStep("Extracted Type", badge("PASS", "pass") + " " + theme.cyan("string")),
+    "",
+    theme.slate("Pattern 2 — Function Return Unboxing:"),
+    "  " + highlightTs('const desc = fnOf("Promise<User>"); // representing () => Promise<User>'),
+    "  " + treeStep("Pattern Match", "() => Promise<User> matches (...args) => infer R → binds " + theme.amber("R := Promise<User>")),
+    "  " + treeStep("Extracted Type", badge("PASS", "pass") + " " + theme.cyan("Promise<User>")),
+    "",
+    theme.slate("Verdict:"),
+    "  " + theme.bold("'infer' is pattern-matching destructuring for the type system."),
+  ]);
 }
 
 export function runMachineryTour(): string {
@@ -181,12 +184,12 @@ export function probeMapped(shape: ShapeDescriptor, op: string, keys: string[] =
     try {
       const result = myPick(shape, keys);
       lines.push(
-        `  Constraint Check: [${keys.map((k) => `"${k}"`).join(", ")}] extends keyof T -> VALID`,
+        `  Constraint Check: ` + badge("PASS", "pass") + ` [${keys.map((k) => `"${k}"`).join(", ")}] extends keyof T → VALID`,
         `  Transformed Shape: ${describeShape(result)}`,
       );
     } catch (err: any) {
       lines.push(
-        `  Constraint Check: FAILED (${err.message})`,
+        `  Constraint Check: ` + badge("FAILED", "refused") + ` (${err.message})`,
         `  Refusal: Cannot pick keys that do not exist on the target shape.`,
       );
     }
@@ -226,7 +229,7 @@ export function probeDistribution(union: string[], excluded: string[]): string {
     `Step 2 — Re-union distributed branches:`,
     `  ${terms.join(" | ")}`,
     `Step 3 — Eliminate 'never' (empty set disappears from unions):`,
-    `  Result: ${collapsed.length > 0 ? collapsed.map((c) => `"${c}"`).join(" | ") : "never"}`,
+    `  Result: ` + badge(collapsed.length > 0 ? collapsed.map((c) => `"${c}"`).join(" | ") : "never", "pass"),
   );
 
   return lines.join("\n");
@@ -240,7 +243,7 @@ export function probeInfer(typeString: string): string {
     const extracted = inferElement(desc);
     lines.push(
       `  Pattern: T extends (infer E)[] ? E : never`,
-      `  Extracted Element Type E: ${extracted}`,
+      `  Extracted Element Type E: ` + badge(extracted, "pass"),
     );
   } else if (typeString.includes("=>")) {
     const returnType = typeString.split("=>")[1].trim();
@@ -248,7 +251,7 @@ export function probeInfer(typeString: string): string {
     const extracted = inferReturn(desc);
     lines.push(
       `  Pattern: F extends (...args: any[]) => infer R ? R : never`,
-      `  Extracted Return Type R: ${extracted}`,
+      `  Extracted Return Type R: ` + badge(extracted, "pass"),
     );
   } else {
     lines.push(`  Pattern did not match: inferred 'never'`);
@@ -279,19 +282,19 @@ export async function runSteppedSession(): Promise<void> {
   console.log("\nStarting Stepped Walkthrough: Utility Types & Mapped Machinery (5 Probes)\n");
 
   console.log(runProbe1());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/5: Pick<T, K> & Keyed Constraint] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 2/5: Pick<T, K> & Keyed Constraint ➔] "));
 
   console.log("\n" + runProbe2());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/5: Omit<T, K> as Inverted Pick] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 3/5: Omit<T, K> as Inverted Pick ➔] "));
 
   console.log("\n" + runProbe3());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/5: Distributive Conditional Exclude] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 4/5: Distributive Conditional Exclude ➔] "));
 
   console.log("\n" + runProbe4());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 5/5: Pattern Matching with infer] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 5/5: Pattern Matching with infer ➔] "));
 
   console.log("\n" + runProbe5());
-  console.log("\nAll 5 utility type probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
+  console.log("\n" + badge("COMPLETE", "pass") + " All 5 utility type probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
@@ -299,10 +302,10 @@ export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "lab-utilities> ",
+    prompt: theme.cyan("lab-utilities ❯ "),
   });
 
-  console.log("\nTypeScript Utility Types Interactive Lab (running with Deno)");
+  console.log(`\n${theme.cyan(theme.bold("❖ TypeScript Utility Types Interactive Lab"))} ${theme.dim("(running with Deno)")}`);
   console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', or 'probe 5'.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");

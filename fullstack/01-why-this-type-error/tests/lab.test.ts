@@ -40,10 +40,10 @@ test("runProbe4 details fresh literal excess property check", () => {
 
 test("runProbe5 details diagnostic error families", () => {
   const result = runProbe5();
-  assert.match(result, /missing-or-incompatible/);
-  assert.match(result, /excess-property/);
-  assert.match(result, /possibly-undefined/);
-  assert.match(result, /union-no-common-member/);
+  assert.match(result, /TS2322/);
+  assert.match(result, /TS2353/);
+  assert.match(result, /TS2532/);
+  assert.match(result, /TS2339/);
 });
 
 test("probeAssignability handles programmatic calls", () => {

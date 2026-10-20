@@ -22,114 +22,148 @@
 import readline from "node:readline";
 import { isAssignable, missingMembers } from "./src/assignability.ts";
 import { classifyError } from "./src/error_family.ts";
+import {
+  theme,
+  badge,
+  card,
+  treeStep,
+  dataFlowPipeline,
+  highlightTs,
+} from "../common/tui.ts";
 
 export function formatJson(val: unknown): string {
   return JSON.stringify(val);
 }
 
 export function runProbe1(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 1/4] Structural Assignability: Exact Shape Match");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.ts):");
-  out.push("  interface User { id: string; name: string; }");
-  out.push("  function isAssignable(value: unknown, shape: Record<string, string>): boolean");
+  const pipeline = dataFlowPipeline([
+    { label: "Input Value", sub: "{ id, name }" },
+    { label: "Target Contract", sub: "User shape" },
+    { label: "Member Match", sub: "id: OK, name: OK" },
+    { label: "Verdict", sub: "ASSIGNABLE" },
+  ]);
 
-  out.push("\nExecution at Call Site:");
-  out.push("  const shape = { id: \"string\", name: \"string\" };");
-  out.push("  const value = { id: \"u1\", name: \"Ada Lovelace\" };");
-  out.push("  const ok = isAssignable(value, shape);");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. TARGET SHAPE:    Requires members 'id: string' and 'name: string'.");
-  out.push("  2. MEMBER CHECK:    'id' present with type string (OK), 'name' present with type string (OK).");
-  out.push("  3. MISSING MEMBERS: None. missingMembers(value, shape) -> [].");
-  out.push("  4. VERDICT:         ASSIGNABLE (Exact match satisfies shape contract).");
-  return out.join("\n");
+  return card("[Probe 1/4] Structural Assignability: Exact Shape Match", [
+    theme.slate("Code Under Test (src/assignability.ts):"),
+    "  " + highlightTs('interface User { id: string; name: string; }'),
+    "  " + highlightTs('function isAssignable(value: unknown, shape: Record<string, string>): boolean;'),
+    "",
+    theme.slate("Execution at Call Site:"),
+    "  " + highlightTs('const shape = { id: "string", name: "string" };'),
+    "  " + highlightTs('const value = { id: "u1", name: "Ada Lovelace" };'),
+    "  " + highlightTs('const ok = isAssignable(value, shape);'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. TARGET SHAPE", 'Requires members "id: string" and "name: string"'),
+    "  " + treeStep("2. MEMBER CHECK", theme.green('"id" present with type string (OK), "name" present with type string (OK)')),
+    "  " + treeStep("3. MISSING MEMBERS", 'None. missingMembers(value, shape) → []'),
+    "  " + treeStep("4. VERDICT", badge("PASS", "pass") + " " + theme.green("ASSIGNABLE (Exact match satisfies shape contract)"), true),
+  ]);
 }
 
 export function runProbe2(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 2/4] Structural Assignability: Missing Required Member");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.ts):");
-  out.push("  interface User { id: string; name: string; }");
-  out.push("  const user: User = { id: \"u1\" }; // missing 'name'");
-
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. TARGET SHAPE:    Requires members 'id: string' and 'name: string'.");
-  out.push("  2. VALUE PROVIDED:  { id: \"u1\" }");
-  out.push("  3. MEMBER CHECK:    'name' was required by User, but is absent on value.");
-  out.push("  4. CHECKER REFUSAL: TS2322: Property 'name' is missing in type '{ id: string }' but required in type 'User'.");
-  out.push("  5. VERDICT:         REFUSED (Types are requirements: you cannot omit declared members).");
-  return out.join("\n");
+  return card("[Probe 2/4] Structural Assignability: Missing Required Member", [
+    theme.slate("Code Under Test (src/assignability.ts):"),
+    "  " + highlightTs('interface User { id: string; name: string; }'),
+    "  " + highlightTs('const user: User = { id: "u1" }; // missing "name"'),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. TARGET SHAPE", 'Requires members "id: string" and "name: string"'),
+    "  " + treeStep("2. VALUE PROVIDED", theme.amber('{ id: "u1" }')),
+    "  " + treeStep("3. MEMBER CHECK", theme.rose('"name" is required by User, but is absent on value')),
+    "  " + treeStep("4. CHECKER REFUSAL", badge("REFUSED", "refused") + " " + theme.rose("TS2322: Property 'name' is missing in type '{ id: string }' but required in type 'User'")),
+    "  " + treeStep("5. VERDICT", theme.bold("REFUSED (Types are requirements: you cannot omit declared members)"), true),
+  ]);
 }
 
 export function runProbe3(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 3/4] Structural Subtyping: Variable Reference with Extra Members");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.ts):");
-  out.push("  interface User { id: string; name: string; }");
-  out.push("  const payload = { id: \"u1\", name: \"Ada Lovelace\", admin: true }; // pre-existing variable");
-  out.push("  const user: User = payload; // assigning variable to User");
+  const pipeline = dataFlowPipeline([
+    { label: "Variable Value", sub: "{ id, name, admin }" },
+    { label: "Freshness Gate", sub: "isFresh: false" },
+    { label: "Subtyping Rule", sub: "Check missing only" },
+    { label: "Verdict", sub: "ASSIGNABLE" },
+  ]);
 
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. FRESHNESS CHECK: Is 'payload' a fresh object literal? NO. It is a variable reference.");
-  out.push("  2. CHECKER RULE:    Variables are checked for what is MISSING, never what is EXTRA.");
-  out.push("  3. MEMBER CHECK:    Does payload have 'id: string'? YES. Does payload have 'name: string'? YES.");
-  out.push("  4. EXTRA MEMBERS:   'admin: true' is ignored. The variable has at least the shape User requires.");
-  out.push("  5. VERDICT:         ASSIGNABLE (Structural subtyping: values may have more members than target).");
-  return out.join("\n");
+  return card("[Probe 3/4] Structural Subtyping: Variable Reference with Extra Members", [
+    theme.slate("Code Under Test (src/assignability.ts):"),
+    "  " + highlightTs('interface User { id: string; name: string; }'),
+    "  " + highlightTs('const payload = { id: "u1", name: "Ada Lovelace", admin: true }; // variable'),
+    "  " + highlightTs('const user: User = payload; // assigning variable to User'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. FRESHNESS CHECK", 'Is "payload" a fresh object literal? ' + theme.cyan("NO (variable reference)")),
+    "  " + treeStep("2. CHECKER RULE", "Variables are checked for what is " + theme.bold("MISSING") + ", never what is " + theme.bold("EXTRA")),
+    "  " + treeStep("3. MEMBER CHECK", 'Does payload have "id: string"? ' + theme.green("YES") + '. Does payload have "name: string"? ' + theme.green("YES")),
+    "  " + treeStep("4. EXTRA MEMBERS", theme.slate('"admin: true" is ignored. The variable has at least the shape User requires')),
+    "  " + treeStep("5. VERDICT", badge("PASS", "pass") + " " + theme.green("ASSIGNABLE (Structural subtyping: values may have more members than target)"), true),
+  ]);
 }
 
 export function runProbe4(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  [Probe 4/4] Excess Property Check: Fresh Literal with Extra Members");
-  out.push("================================================================================");
-  out.push("\nCode Under Test (src/assignability.ts):");
-  out.push("  interface User { id: string; name: string; }");
-  out.push("  const user: User = { id: \"u1\", name: \"Ada Lovelace\", admin: true }; // fresh literal");
+  const pipeline = dataFlowPipeline([
+    { label: "Fresh Literal", sub: "{ id, name, admin }" },
+    { label: "Freshness Gate", sub: "isFresh: true" },
+    { label: "Excess Gate", sub: "Reject unknown keys" },
+    { label: "Verdict", sub: "TS2353 REFUSED" },
+  ]);
 
-  out.push("\nBehind the Scenes in the TypeScript Compiler:");
-  out.push("  1. FRESHNESS CHECK: Is the value written directly at the assignment site? YES (Fresh object literal).");
-  out.push("  2. GATE TRIGGERED:  Fresh literals trigger the Excess Property Check.");
-  out.push("  3. PURPOSE:         Catching typos and obsolete fields before values escape into the program.");
-  out.push("  4. CHECKER REFUSAL: TS2353: Object literal may only specify known properties, and 'admin' does not exist in type 'User'.");
-  out.push("  5. CONTRAST:        Same object shape as Probe 3, opposite verdict! Freshness decides the check.");
-  out.push("  6. SENIOR MOVE:     Either declare 'admin' in User if intentional, or remove it from the literal.");
-  return out.join("\n");
+  return card("[Probe 4/4] Excess Property Check: Fresh Literal with Extra Members", [
+    theme.slate("Code Under Test (src/assignability.ts):"),
+    "  " + highlightTs('interface User { id: string; name: string; }'),
+    "  " + highlightTs('const user: User = { id: "u1", name: "Ada Lovelace", admin: true }; // fresh literal'),
+    "",
+    theme.slate("Dataflow Pipeline:"),
+    ...pipeline.split("\n").map((l) => "  " + l),
+    "",
+    theme.slate("Behind the Scenes in the TypeScript Compiler:"),
+    "  " + treeStep("1. FRESHNESS CHECK", 'Written directly at assignment site? ' + theme.amber("YES (Fresh object literal)")),
+    "  " + treeStep("2. GATE TRIGGERED", badge("GATE", "warning") + " " + theme.amber("Fresh literals trigger the Excess Property Check")),
+    "  " + treeStep("3. PURPOSE", "Catching typos and obsolete fields before values escape into the program"),
+    "  " + treeStep("4. CHECKER REFUSAL", badge("REFUSED", "refused") + " " + theme.rose("TS2353: Object literal may only specify known properties, and 'admin' does not exist in type 'User'")),
+    "  " + treeStep("5. CONTRAST", theme.bold("Same object shape as Probe 3, opposite verdict! Freshness decides the check")),
+    "  " + treeStep("6. SENIOR MOVE", "Either declare 'admin' in User if intentional, or remove it from the literal", true),
+  ]);
 }
 
 export function runProbe5(): string {
-  const out: string[] = [];
-  out.push("================================================================================");
-  out.push("  Diagnostic Error Families (src/error_family.ts)");
-  out.push("================================================================================");
-
-  out.push("\n[Diagnostic 1] Base Assignability Mismatch");
-  out.push(probeFamily("Type 'number' is not assignable to type 'string'."));
-
-  out.push("\n[Diagnostic 2] Fresh Literal Excess Property");
-  out.push(
-    probeFamily(
-      "Type '{ id: string; admin: true; }' may only specify known properties, and 'admin' does not exist in type 'User'.",
-    ),
-  );
-
-  out.push("\n[Diagnostic 3] Possibly Undefined Dereference");
-  out.push(probeFamily("Object is possibly 'undefined'."));
-
-  out.push("\n[Diagnostic 4] Union Member Access without Narrowing");
-  out.push(probeFamily("Property 'radius' does not exist on type 'Circle | Square'."));
-  return out.join("\n");
+  return card("Diagnostic Error Families Matrix (src/error_family.ts)", [
+    theme.bold("[Diagnostic 1] Base Assignability Mismatch (TS2322 / TS2345)") + " " + badge("MISMATCH", "refused"),
+    "  " + theme.cyan('Message: "Type \'number\' is not assignable to type \'string\'."'),
+    "  " + treeStep("Claim", "Target expects a property or type that the source does not provide"),
+    "  " + treeStep("Naive Trap", theme.rose("Casting with 'as' or silencing with 'any' — discards the error and ships broken data")),
+    "  " + treeStep("Senior Fix", theme.green("Inspect which member diverged, then fix the data or widen target interface")),
+    "",
+    theme.bold("[Diagnostic 2] Fresh Literal Excess Property (TS2353)") + " " + badge("EXCESS", "warning"),
+    "  " + theme.cyan('Message: "Type \'{ id: string; admin: true; }\' may only specify known properties..."'),
+    "  " + treeStep("Claim", "Fresh literal specifies a property not declared in target shape"),
+    "  " + treeStep("Naive Trap", theme.rose("Disabling excess checks by adding '[key: string]: any' to interface")),
+    "  " + treeStep("Senior Fix", theme.green("Either declare the property on interface or remove excess field")),
+    "",
+    theme.bold("[Diagnostic 3] Possibly Undefined Dereference (TS2532)") + " " + badge("EVIDENCE", "collapse"),
+    "  " + theme.cyan('Message: "Object is possibly \'undefined\'."'),
+    "  " + treeStep("Claim", "Attempting to dereference a property on a value that may be undefined or null"),
+    "  " + treeStep("Naive Trap", theme.rose("Non-null assertion 'value!.prop' — crashes at runtime if absent")),
+    "  " + treeStep("Senior Fix", theme.green("Provide explicit evidence: optional chaining 'value?.prop' or an if-guard")),
+    "",
+    theme.bold("[Diagnostic 4] Union Member Access without Narrowing (TS2339)") + " " + badge("UNION TRAP", "trap"),
+    "  " + theme.cyan('Message: "Property \'radius\' does not exist on type \'Circle | Square\'."'),
+    "  " + treeStep("Claim", "Property exists on some union variants, but not on all of them"),
+    "  " + treeStep("Naive Trap", theme.rose("Casting to one specific variant '(item as Circle).radius' without checking")),
+    "  " + treeStep("Senior Fix", theme.green("Narrow by discriminant first: 'if (item.kind === \"circle\") item.radius'")),
+  ]);
 }
 
-export function probeAssignability(value: unknown, shape: Record<string, string>, options: { isFresh?: boolean } = {}): string {
+export function probeAssignability(
+  value: unknown,
+  shape: Record<string, string>,
+  options: { isFresh?: boolean } = {},
+): string {
   const isFresh = options.isFresh ?? false;
   const missing = missingMembers(value, shape);
   const extraKeys =
@@ -145,31 +179,31 @@ export function probeAssignability(value: unknown, shape: Record<string, string>
 
   if (missing.length > 0) {
     lines.push(
-      `  Required Member Check: FAILED`,
+      `  Required Member Check: ` + badge("FAILED", "refused"),
       `  Missing or incompatible: [${missing.map((m) => `"${m}"`).join(", ")}]`,
-      `  Checker Verdict: REFUSED (TS2322: Type does not satisfy target shape)`,
+      `  Checker Verdict: ` + badge("REFUSED", "refused") + ` (TS2322: Type does not satisfy target shape)`,
     );
     return lines.join("\n");
   }
 
-  lines.push(`  Required Member Check: PASSED (all required members present with valid types)`);
+  lines.push(`  Required Member Check: ` + badge("PASSED", "pass") + ` (all required members present with valid types)`);
 
   if (extraKeys.length > 0) {
     lines.push(`  Extra Members Detected: [${extraKeys.map((k) => `"${k}"`).join(", ")}]`);
     if (isFresh) {
       lines.push(
-        `  Excess Property Check: TRIGGERED`,
-        `  Checker Verdict: REFUSED (TS2353: Object literal may only specify known properties, and '${extraKeys[0]}' does not exist in target shape)`,
+        `  Excess Property Check: ` + badge("TRIGGERED", "warning"),
+        `  Checker Verdict: ` + badge("REFUSED", "refused") + ` (TS2353: Object literal may only specify known properties, and '${extraKeys[0]}' does not exist in target shape)`,
         `  Explanation: Fresh literals trigger excess property checks to catch typos before values escape.`,
       );
     } else {
       lines.push(
-        `  Excess Property Check: SKIPPED (variable references are checked structurally)`,
-        `  Checker Verdict: ASSIGNABLE (structural subtyping: extra members on variables are permitted)`,
+        `  Excess Property Check: ` + badge("SKIPPED", "neutral") + ` (variable references are checked structurally)`,
+        `  Checker Verdict: ` + badge("ASSIGNABLE", "pass") + ` (structural subtyping: extra members on variables are permitted)`,
       );
     }
   } else {
-    lines.push(`  Checker Verdict: ASSIGNABLE (exact shape match)`);
+    lines.push(`  Checker Verdict: ` + badge("ASSIGNABLE", "pass") + ` (exact shape match)`);
   }
 
   return lines.join("\n");
@@ -254,16 +288,16 @@ export async function runSteppedSession(): Promise<void> {
   console.log("\nStarting Stepped Walkthrough: Structural Assignability & Freshness (4 Probes)\n");
 
   console.log(runProbe1());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 2/4: Missing Required Member] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 2/4: Missing Required Member ➔] "));
 
   console.log("\n" + runProbe2());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 3/4: Variable Reference & Structural Subtyping] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 3/4: Variable Reference & Structural Subtyping ➔] "));
 
   console.log("\n" + runProbe3());
-  await waitForEnter(rl, "\n[Press Enter to proceed to Probe 4/4: Fresh Literal Excess Property Check] ");
+  await waitForEnter(rl, "\n" + theme.cyan("[Press Enter to proceed to Probe 4/4: Fresh Literal Excess Property Check ➔] "));
 
   console.log("\n" + runProbe4());
-  console.log("\nAll 4 assignability probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
+  console.log("\n" + badge("COMPLETE", "pass") + " All 4 assignability probes completed! Type 'deno task lab' or 'npm run lab' for the interactive REPL.\n");
   rl.close();
 }
 
@@ -271,10 +305,10 @@ export async function startRepl(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "lab-checker> ",
+    prompt: theme.cyan("lab-checker ❯ "),
   });
 
-  console.log("\nTypeScript Type Error & Assignability Interactive Lab (running with Deno)");
+  console.log(`\n${theme.cyan(theme.bold("❖ TypeScript Type Error & Assignability Lab"))} ${theme.dim("(running with Deno)")}`);
   console.log("Type 'probe 1', 'probe 2', 'probe 3', 'probe 4', or 'probe 5' to run individual probes.");
   console.log("Type 'step' for interactive pause-and-continue walkthrough.");
   console.log("Type 'tour' for full dump, 'help' for commands, or 'exit' to quit.\n");
