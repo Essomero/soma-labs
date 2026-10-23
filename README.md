@@ -2,7 +2,7 @@
 
 The official companion repository for hands-on drills, real-world code reproductions, and performance benchmarks across [Soma](https://soma.vercel.app) courses.
 
-Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. A passing test suite is not a lab: see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
+Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. Every lab follows the *Grokking Algorithms* standard: simplicity without losing complexity. You build concrete mental models by touching real systems and seeing them fail before making them pass. A passing test suite is not a lab: see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
 
 Clone this repository once:
 ```bash
