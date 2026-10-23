@@ -2,13 +2,23 @@
 
 The official companion repository for hands-on drills, real-world code reproductions, and performance benchmarks across [Soma](https://soma.vercel.app) courses.
 
-Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. A passing test suite is not a lab — see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
+Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. A passing test suite is not a lab: see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
 
 Clone this repository once:
 ```bash
 gh repo clone Essomero/soma-labs
 cd soma-labs
 ```
+
+---
+
+## The Soma Suite
+
+Soma is designed as a three-repository ecosystem:
+
+1. **[Soma](https://github.com/Essomero/soma)**: The web platform, reading experience, private notebook (`/learn`), agent content creation skills, and sovereign edge API.
+2. **Soma Labs** (this repo): The companion engineering workspace for running drills, testing servers, and benchmarks across Go, TypeScript, Docker, and PostgreSQL.
+3. **[Son](https://github.com/Essomero/son)**: The local voice agent backend powering oral technical screen interviews and audio Q&A at `http://localhost:7860`.
 
 ---
 
@@ -73,6 +83,7 @@ soma-labs/
 - **Node.js**: v20+ (for full-stack, React, and Node servers)
 - **Go**: v1.20+ (with standard `go test` and `-race`)
 - **Docker & Docker Compose**: (Optional, for running real Postgres reporting queries)
+
 ---
 
 ## Quick Start: Running Drills
@@ -115,5 +126,5 @@ cd hogql/04-all-or-nothing && npm test
 
 A mocked, runnable reproduction of PostHog's HogQL direct-connection access control: how
 `sendRawQuery` is gated, how per-object warehouse ACLs are enforced, and the invariant that
-keeps raw mode and HogQL from drifting. No Django, no database — `hogql/lib/` mirrors the
+keeps raw mode and HogQL from drifting. No Django, no database: `hogql/lib/` mirrors the
 real modules with matching names. Start at [`hogql/GUIDE.md`](hogql/GUIDE.md).

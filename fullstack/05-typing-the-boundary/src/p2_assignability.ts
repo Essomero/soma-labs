@@ -12,8 +12,15 @@ export interface AssignableCheck {
 }
 
 export function checkAssignable(from: string, to: string): AssignableCheck {
-  if (TOP_TYPES.has(from)) return { assignable: true, reason: null };
+  if (TOP_TYPES.has(to)) return { assignable: true, reason: null };
+  if (from === "any") return { assignable: true, reason: null };
   if (from === to) return { assignable: true, reason: null };
+  if (from === "unknown") {
+    return {
+      assignable: false,
+      reason: `unknown must be narrowed to ${to} beforeit can be used here`,
+    };
+  }
   return { assignable: false, reason: `${from} is not assignable to ${to}` };
 }
 
