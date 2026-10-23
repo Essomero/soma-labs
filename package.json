@@ -4,6 +4,8 @@
   "private": true,
   "description": "Companion runnable code labs for Soma courses",
   "scripts": {
+    "postinstall": "node scripts/doctor.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "test:typescript": "node run-all-typescript.mjs",
     "test:toggl": "node run-all-toggl.mjs",
     "test:go": "node run-all-go.mjs",

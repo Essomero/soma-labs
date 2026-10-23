@@ -2,12 +2,26 @@
 
 The official companion repository for hands-on drills, real-world code reproductions, and performance benchmarks across [Soma](https://soma.vercel.app) courses.
 
-Labs here are **hands-on**: each one gives you an input to change and shows you the effect of changing it. Every lab follows the *Grokking Algorithms* standard: simplicity without losing complexity. You build concrete mental models by touching real systems and seeing them fail before making them pass. A passing test suite is not a lab: see the `hogql/` track for the reference shape (`npm run lab` to drive it, `npm run tour -- --pause` to step through, `compare` to diff two configurations).
-
-Clone this repository once:
 ```bash
 gh repo clone Essomero/soma-labs
 cd soma-labs
+npm install       # Automatically runs the doctor probe to check installed runtimes
+```
+
+---
+
+## The Philosophy: Open-Ended, Polyglot, and Minimal
+
+Soma Labs is an **open-ended laboratory**. The current tracks (Go, TypeScript via Deno, PostgreSQL in Docker, and HogQL) are sample tracks built to explore specific systems. The repository is designed to host drills in any language or runtime: Python, Rust, Zig, C++, SQLite, WebAssembly, or bash.
+
+Every lab adheres to three core rules:
+
+1. **Minimal Dependencies First**: Reach for the standard library before adding an external package. Every dependency is an ongoing maintenance tax. When external libraries are used, they are isolated to their specific track workspace.
+2. **Explicit Prerequisites**: Tracks never fail with mysterious missing binaries. Every tool requirement is explicitly declared in the track matrix below.
+3. **Automated Diagnostic Setup**: Running `npm install` automatically probes your workstation and tells you exactly which tracks are runnable with your current setup:
+
+```bash
+npm run doctor    # Re-run environment diagnostics at any time
 ```
 
 ---
@@ -17,114 +31,70 @@ cd soma-labs
 Soma is designed as a three-repository ecosystem:
 
 1. **[Soma](https://github.com/Essomero/soma)**: The web platform, reading experience, private notebook (`/learn`), agent content creation skills, and sovereign edge API.
-2. **Soma Labs** (this repo): The companion engineering workspace for running drills, testing servers, and benchmarks across Go, TypeScript, Docker, and PostgreSQL.
+2. **Soma Labs** (this repo): The companion engineering workspace for running drills, testing servers, and benchmarks across any language or toolchain.
 3. **[Son](https://github.com/Essomero/son)**: The local voice agent backend powering oral technical screen interviews and audio Q&A at `http://localhost:7860`.
 
 ---
 
-## Directory Structure
+## Track Matrix & Prerequisites
 
-```
-soma-labs/
-├── docker-compose.yml           # Shared local Postgres 16 & Redis
-├── typescript/                 # TypeScript Interview Fast Track (5 Lessons, symlinked)
-│   ├── 01-why-this-type-error/  # L1: structural assignability, error family, excess property
-│   ├── 02-generics/             # L2: constrained generics, inference sites, when NOT to generalize
-│   ├── 03-discriminated-unions/ # L3: tagged unions, exhaustiveness with never, narrowing
-│   ├── 04-utility-types/        # L4: mapped types, keyof, conditional types, infer
-│   └── 05-typing-the-boundary/  # L5: trust boundaries, unknown vs any, Zod schemas
-├── go/                          # Go From First Principles (7 Lessons)
-│   ├── 01-shallow-end/          # L1: Packages, variables, zero values, multiple returns
-│   ├── 02-pointers-structs/     # L2: Pointer vs value receivers, struct embedding
-│   ├── 03-slices-maps/          # L3: Slice headers, 3-index subslices, map comma-ok
-│   ├── 04-errors-defer/         # L4: %w wrapping, errors.Is/As, defer LIFO order
-│   ├── 05-interfaces/           # L5: Implicit satisfaction, typed-nil trap and fix
-│   ├── 06-goroutines-channels/  # L6: Channels, select timeouts, mutex under -race
-│   └── 07-context-http/         # L7: Cancellation tree, stdlib HTTP, JSON streaming
-├── fullstack/                    # Full-Stack Interview 40 Track (TypeScript, React, Node, browser, DB, testing, ops)
-│   ├── 01-why-this-type-error/   # L1: structural assignability, the error family, excess-property check
-│   ├── 02-generics/              # L2: constrained generics, inference sites, when NOT to generalize
-│   └── ...                       # one workspace per lesson, 01-40
-├── toggl/                       # Toggl Senior Full-Stack Track
-│   ├── 01-go-basics/            # Worker pools, error wrapping, stdlib HTTP
-│   ├── 02-time-dst/             # Interval arithmetic, 23h/25h DST days
-│   ├── 03-postgres-reporting/   # Window functions, gap-free buckets, index plans
-│   ├── 04-api-keyset/           # Fastify keyset pagination, bulk mutations, 409s
-│   ├── 05-state-sync/           # URL state synchronization, mirror bug elimination
-│   ├── 06-query-cache/          # TanStack Query invalidation graph, rollback
-│   ├── 07-table-virtualization/ # 50,000-row table windowing & inline edit
-│   ├── 08-perf-diagnostics/     # N+1 detection, React render profiler
-│   ├── 09-contract-tests/       # Table-driven tests, contract assertions
-│   ├── 10-skill-drills/         # Timed screen drills (race condition, autocomplete)
-│   ├── 11-capacity-planning/    # Availability calendar, plan vs actual outer join
-│   ├── 12-eventual-consistency/ # Replica lag, monotonic read fence, rollback
-│   ├── 13-capacity-heatmap/     # Heatmap matrix calculation, zero baseline
-│   ├── 14-dense-grid-css/       # Subgrid row alignment, sticky scroll container
-│   ├── 15-distroless-container/ # Multi-stage Dockerfile, static binary, signals
-│   └── 16-ai-review-gate/       # AST linter for %w, context propagation, error check
-└── hogql/                       # HogQL Direct Connections & Warehouse Access Control (mocked PostHog internals)
-    ├── lib/                     # In-memory mocks mirroring real PostHog modules
-    ├── GUIDE.md                 # Lightweight walkthrough
-    ├── 01-flag-gate/            # Feature-flag master switch
-    ├── 02-fail-closed/          # No user denies; synthetic/shared-link bypasses
-    ├── 03-org-admin/            # Org admins bypass object ACLs
-    ├── 04-all-or-nothing/       # One denied table blocks raw for the connection
-    ├── 05-raw-vs-hogql/         # Same query, two enforcement paths
-    ├── 06-schema-drop/          # HogQL drops denied tables; preload avoids N lookups
-    └── 07-guards-and-invariant/ # Raw statement guards; flag must gate BOTH paths
-```
+You only need the tools for the tracks you want to run. If you only care about TypeScript, you do not need Go or Docker installed.
+
+| Track | Language / Runtime | Tool Required | What It Tests |
+|---|---|---|---|
+| **TypeScript Fast Track** | TypeScript | **Deno 2.x+** | Native zero-config .ts execution, structural assignability, generics, unions, Zod boundaries |
+| **Go From First Principles** | Go | **Go 1.20+** | Pointers, slice headers, defer LIFO, typed nil traps, goroutines with `-race` |
+| **HogQL Access Control** | JavaScript | **Node 20+** | Warehouse permissions, raw query gating, AST analysis, security invariants |
+| **Full-Stack Interview 40** | TypeScript / Node | **Node 20+** | React render cycles, TanStack Query invalidation, Fastify pagination, memory leaks |
+| **PostgreSQL Reporting** | SQL / Postgres | **Docker Compose** | Temporal rate tables, window functions, gap-free date bucketing, EXPLAIN plans |
+
+### Tool Installation Commands
+
+- **Node.js 20+**: `https://nodejs.org` or `fnm install 20` / `nvm use 20`
+- **Deno 2+**: `brew install deno` or `curl -fsSL https://deno.land/install.sh | sh`
+- **Go 1.20+**: `brew install go` or `https://go.dev/dl/`
+- **Docker**: `https://docker.com` or `brew install colima && colima start`
 
 ---
 
-## Prerequisites
+## Running Drills
 
-- **Deno**: v2.x+ (required for TypeScript labs: native zero-config .ts execution, type checking, and REPLs)
-  - Install: `brew install deno` (macOS) or `curl -fsSL https://deno.land/install.sh | sh` (Linux / macOS)
-- **Node.js**: v20+ (for full-stack, React, and Node servers)
-- **Go**: v1.20+ (with standard `go test` and `-race`)
-- **Docker & Docker Compose**: (Optional, for running real Postgres reporting queries)
-
----
-
-## Quick Start: Running Drills
-
-Run all drills from root:
+Run all available drills across the repository:
 ```bash
 npm test
 ```
 
-Run TypeScript fast track drills:
+Run specific tracks individually:
 ```bash
-npm run test:typescript
+npm run test:typescript   # Native TypeScript drills via Deno
+npm run test:go           # Go concurrency & race-detector drills
+npm run test:hogql        # HogQL warehouse security gate drills
+npm run test:toggl        # Toggl full-stack production drills
+npm run test:fullstack    # Full-stack interview reproductions
 ```
 
-Run Toggl track drills:
+Or navigate to any individual lesson directory to inspect the code and run its tests directly:
 ```bash
-npm run test:toggl
-```
-
-Run Go foundations drills:
-```bash
-npm run test:go
-```
-
-Run HogQL direct-connection drills:
-```bash
-npm run test:hogql
-```
-
-Or navigate to any specific lesson directory:
-```bash
+cd typescript/01-why-this-type-error && deno test
+cd go/06-goroutines-channels && go test -race -v ./...
 cd toggl/11-capacity-planning && npm test
-cd go/05-interfaces && go test -v ./...
 cd hogql/04-all-or-nothing && npm test
 ```
 
 ---
 
-## HogQL Direct Connections Track
+## Adding a New Track
 
-A mocked, runnable reproduction of PostHog's HogQL direct-connection access control: how
-`sendRawQuery` is gated, how per-object warehouse ACLs are enforced, and the invariant that
-keeps raw mode and HogQL from drifting. No Django, no database: `hogql/lib/` mirrors the
-real modules with matching names. Start at [`hogql/GUIDE.md`](hogql/GUIDE.md).
+To add a new track in any language (for example, Rust, Python, or SQLite):
+
+1. Create a top-level directory: `<track-name>/`
+2. Keep dependencies minimal: prefer standard library test runners (`cargo test`, `pytest`, `python -m unittest`).
+3. Add a runner script in root: `run-all-<track>.mjs`.
+4. Register the test command in `package.json`.
+5. Add the prerequisite tool check to `scripts/doctor.mjs`.
+
+---
+
+## License
+
+MIT License. Open to any engineer, thinker, or learner building deep mental models.
