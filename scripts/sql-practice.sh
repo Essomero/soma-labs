@@ -45,6 +45,17 @@ CONTAINER="${SQL_PRACTICE_CONTAINER:-sqldrills}"
 KIT_URL="${SQL_PRACTICE_KIT_URL:-https://soma.vercel.app/sql}"
 KIT_CACHE="${SQL_PRACTICE_KIT_CACHE:-$HOME/.sql-practice/kit}"
 SOCKET_DIR="${SQL_PRACTICE_SOCKET:-/tmp}"
+# Validate operator-supplied names before they reach SQL or docker. These come
+# from environment variables, so a stray quote would otherwise break out of
+# the psql -c strings and the docker exec arguments below.
+if [[ ! "$DB" =~ ^[A-Za-z0-9_]+$ ]]; then
+  echo "error: SQL_PRACTICE_DB must be [A-Za-z0-9_]+, got '$DB'" >&2
+  exit 1
+fi
+if [[ ! "$CONTAINER" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+  echo "error: SQL_PRACTICE_CONTAINER must be [A-Za-z0-9_.-]+, got '$CONTAINER'" >&2
+  exit 1
+fi
 
 # Data directory: next to this script by default, wherever it was copied to.
 if [[ -n "${SQL_PRACTICE_DATA:-}" ]]; then
@@ -172,6 +183,10 @@ port_from_record() {
 
 pick_port() {
   if [[ -n "${SQL_PRACTICE_PORT:-}" ]]; then
+    if [[ ! "$SQL_PRACTICE_PORT" =~ ^[0-9]+$ ]] || (( SQL_PRACTICE_PORT < 1 || SQL_PRACTICE_PORT > 65535 )); then
+      echo "error: SQL_PRACTICE_PORT must be 1-65535, got '$SQL_PRACTICE_PORT'" >&2
+      exit 1
+    fi
     echo "$SQL_PRACTICE_PORT"
     return 0
   fi
