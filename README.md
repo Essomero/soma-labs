@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon-soma-labs.png" alt="Soma Labs icon" width="200" />
+</p>
+
 # Soma Labs
 
 The official companion repository for hands-on drills that prove each lesson in [Soma](https://soma.vercel.app) courses. Every lab gives you an input to change and shows you the effect of changing it.
